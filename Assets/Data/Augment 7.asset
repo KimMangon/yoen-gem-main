@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4efad45a5ce9dc46b29db9adf4652f4, type: 3}
+  m_Name: Augment 7
+  m_EditorClassIdentifier: 
+  augmentType: 3
+  augmentName: "\uC774\uB3D9 \uC18D\uB3C4 \uC57D\uD654"
+  augmentId: 7
+  augmentDesc: 
+  augmentIcon: {fileID: -966295699, guid: d71a3dc7aa20fad4f9a99fc76a9254ba, type: 3}
+  value: 0
+  duration: 0
+  baseDamage: 0
+  basecount: 0
+  damages:
+  - 4
+  - 4
+  - 4
+  - 4
+  - 4
+  counts: 1e0000001e000000190000001400000014000000
+  weaponPrefab: []
