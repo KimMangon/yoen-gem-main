@@ -1,0 +1,7 @@
+newmtl BlackMetal
+Ka 0.08 0.08 0.08
+Kd 0.16 0.16 0.17
+Ks 0.04 0.04 0.04
+Ns 20.0
+d 1.0
+illum 2

@@ -17,15 +17,14 @@ MonoBehaviour:
   augmentId: 4
   augmentDesc: 
   augmentIcon: {fileID: 21300000, guid: 3cadcd247345c2649b0e8fbd9ee6e8db, type: 3}
-  value: 0
-  duration: 0
   baseDamage: 0
   basecount: 0
   damages:
-  - 10
-  - 15
   - 20
-  - 25
+  - 20
   - 30
+  - 30
+  - 40
   counts: 0000000000000000000000000000000000000000
+  durations: []
   weaponPrefab: []

@@ -12,7 +12,7 @@ public class Bullet : MonoBehaviour
     {
         // 기본 데미지 + 플레이어의 원거리 버프 수치
         damage = baseDamage + bonusDamage;
-        Debug.Log($"총알 생성됨! 기본:{baseDamage} + 보너스:{bonusDamage} = 최종:{damage}");
+        
     }
 
     void OnCollisionEnter(Collision collision)

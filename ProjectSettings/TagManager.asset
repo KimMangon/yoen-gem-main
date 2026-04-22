@@ -16,6 +16,8 @@ TagManager:
   - Block
   - EnemyMeleeBullet
   - RollMelee
+  - Katana
+  - Blacksmith
   layers:
   - Default
   - TransparentFX
@@ -31,7 +33,7 @@ TagManager:
   - Enemy
   - EnemyDead
   - EnemyBullet
-  - 
+  - PlayerMelee
   - 
   - 
   - 

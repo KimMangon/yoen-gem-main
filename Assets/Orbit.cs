@@ -14,8 +14,10 @@ public class Orbit : MonoBehaviour
 
 
 
-
-
+    public void TeleportWithPlayer(Vector3 newPlayerPos)
+    {
+        transform.position = newPlayerPos + offSet;
+    }
 
 
     void Start()

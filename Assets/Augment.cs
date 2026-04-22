@@ -15,28 +15,17 @@ public class Augment : MonoBehaviour
     Text augmentName;
     Text augmentLevel;
 
-    // 근접 강화(0번) 코루틴 및 수치 저장
-    Coroutine buffRoutine;
+    // 근접 강화(0번) 수치 저장
     int buffAmount = 0;
-
-    // 근접 약화(1번) 코루틴 및 수치 저장
-    Coroutine debuffRoutine;
+    // 근접 약화(1번) 수치 저장
     int debuffAmount = 0;
-
-    // 원거리 강화(2번) 코루틴 및 수치 저장
-    Coroutine rangeBuffRoutine;
+    // 원거리 강화(2번) 수치 저장
     int rangeBuffAmount = 0;
-
-    // 원거리 약화(3번) 코루틴 및 수치 저장
-    Coroutine rangeDebuffRoutine;
+    // 원거리 약화(3번) 수치 저장
     int rangeDebuffAmount = 0;
-
-    // 이동속도 강화(6번) 코루틴 및 수치 저장
-    Coroutine speedBuffRoutine;
+    // 이동속도 강화(6번) 수치 저장
     float speedBuffAmount = 0;
-
-    // 이동속도 약화(7번) 코루틴 및 수치 저장
-    Coroutine speedDebuffRoutine;
+    // 이동속도 약화(7번) 수치 저장
     float speedDebuffAmount = 0;
 
     int maxLevel;
@@ -54,7 +43,39 @@ public class Augment : MonoBehaviour
     private void LateUpdate()
     {
         augmentName.text = data.augmentName;
-        augmentLevel.text = "Lv." + (level);
+
+        int nextLevel = Mathf.Min(level, data.damages.Length - 1);
+
+        switch (data.augmentType)
+        {
+            case AugmentData.AugmentType.Melee:
+                int mVal = (int)data.damages[nextLevel];
+                string mAction = data.augmentId == 0 ? "강화" : "약화";
+                augmentLevel.text = "Lv." + level + "\n" + mVal + " " + mAction;
+                break;
+
+            case AugmentData.AugmentType.Bullet:
+                int rVal = (int)data.damages[nextLevel];
+                string rAction = data.augmentId == 2 ? "강화" : "약화";
+                augmentLevel.text = "Lv." + level + "\n" + rVal + " " + rAction;
+                break;
+
+            case AugmentData.AugmentType.Health:
+                int hVal = (int)data.damages[nextLevel];
+                string hAction = data.augmentId == 4 ? "회복" : "감소";
+                augmentLevel.text = "Lv." + level + "\n" + hVal + " " + hAction;
+                break;
+
+            case AugmentData.AugmentType.Shoe:
+                float sVal = data.damages[nextLevel];
+                string sAction = data.augmentId == 6 ? "강화" : "약화";
+                augmentLevel.text = "Lv." + level + "\n" + sVal + " " + sAction;
+                break;
+
+            default:
+                augmentLevel.text = "Lv." + level;
+                break;
+        }
     }
 
     public void OnClick()
@@ -67,98 +88,46 @@ public class Augment : MonoBehaviour
             switch (data.augmentType)
             {
                 case AugmentData.AugmentType.Melee:
-                    float mDuration = data.counts[level];
                     int mAmount = (int)data.damages[level];
-
                     if (data.augmentId == 0)
-                    {
-                        
-                        if (buffRoutine != null) player.StopCoroutine(buffRoutine);
-                        buffRoutine = player.StartCoroutine(ApplyBuff(mAmount, mDuration, true));
-                    }
+                        ApplyBuff(mAmount, true);
                     else if (data.augmentId == 1)
-                    {
-                        
-                        if (debuffRoutine != null) player.StopCoroutine(debuffRoutine);
-                        debuffRoutine = player.StartCoroutine(ApplyBuff(-mAmount, mDuration, false));
-                    }
+                        ApplyBuff(-mAmount, false);
                     break;
 
                 case AugmentData.AugmentType.Bullet:
-                    float rDuration = data.counts[level];
                     int rAmount = (int)data.damages[level];
-
                     if (data.augmentId == 2)
-                    {
-                        
-                        if (rangeBuffRoutine != null) player.StopCoroutine(rangeBuffRoutine);
-                        rangeBuffRoutine = player.StartCoroutine(ApplyRangeEffect(rAmount, rDuration, true));
-                    }
+                        ApplyRangeEffect(rAmount, true);
                     else if (data.augmentId == 3)
-                    {
-                        
-                        if (rangeDebuffRoutine != null) player.StopCoroutine(rangeDebuffRoutine);
-                        rangeDebuffRoutine = player.StartCoroutine(ApplyRangeEffect(-rAmount, rDuration, false));
-                    }
+                        ApplyRangeEffect(-rAmount, false);
                     break;
 
                 case AugmentData.AugmentType.Health:
                     int healthVal = (int)data.damages[level];
-
                     if (data.augmentId == 4)
-                    {
                         player.Heal(healthVal);
-                        Debug.Log($"[회복 증강] {healthVal}만큼 즉시 회복되었습니다.");
-                    }
                     else if (data.augmentId == 5)
                     {
                         player.health -= healthVal;
                         if (player.health <= 0)
                             player.OnDie();
-                        Debug.Log($"[체력 감소] {healthVal}만큼 감소 (남은 체력: {player.health})");
                     }
                     break;
 
                 case AugmentData.AugmentType.Shoe:
-                    float sDuration = data.counts[level];
                     float sAmount = data.damages[level];
-
                     if (data.augmentId == 6)
-                    {
-                        
-                        if (speedBuffRoutine != null) player.StopCoroutine(speedBuffRoutine);
-                        speedBuffRoutine = player.StartCoroutine(ApplySpeedEffect(sAmount, sDuration, true));
-                    }
+                        ApplySpeedEffect(sAmount, true);
                     else if (data.augmentId == 7)
-                    {
-                        
-                        if (speedDebuffRoutine != null) player.StopCoroutine(speedDebuffRoutine);
-                        speedDebuffRoutine = player.StartCoroutine(ApplySpeedEffect(-sAmount, sDuration, false));
-                    }
+                        ApplySpeedEffect(-sAmount, false);
                     break;
 
                 case AugmentData.AugmentType.editWeapon:
                     if (data.augmentId == 8)
                     {
-                        int targetCount = (int)data.counts[level];
-                        float rollDuration = data.durations[level];
-                        
-
-                        for (int i = 0; i < player.rollWeapons.Length; i++)
-                        {
-                            bool shouldBeActive = i < targetCount;
-                            player.rollWeapons[i].SetActive(shouldBeActive);
-
-                            if (shouldBeActive)
-                            {
-                                Weapon w = player.rollWeapons[i].GetComponent<Weapon>();
-                                if (w != null)
-                                {
-                                    w.damage = (int)data.damages[level] + player.bonusMeleeDamage;
-                                    w.Use(rollDuration);
-                                }
-                            }
-                        }
+                        GameManager.Instance.skillEGroup.SetActive(true);
+                        // 나머지 플레이어에서 실행
                     }
                     break;
             }
@@ -177,6 +146,12 @@ public class Augment : MonoBehaviour
                 mainWep.damage += amount;
         }
 
+        if (player.weapons[4] != null)
+        {
+            Weapon katana = player.weapons[4].GetComponent<Weapon>();
+            if (katana != null) katana.damage += amount;
+        }
+
         for (int i = 0; i < player.rollWeapons.Length; i++)
         {
             if (player.rollWeapons[i] == null) continue;
@@ -186,7 +161,7 @@ public class Augment : MonoBehaviour
         }
     }
 
-    IEnumerator ApplyBuff(int amount, float time, bool isBuff)
+    void ApplyBuff(int amount, bool isBuff)
     {
         if (isBuff)
         {
@@ -203,28 +178,9 @@ public class Augment : MonoBehaviour
 
         UpdateAllMeleeDamage(amount);
         player.bonusMeleeDamage += amount;
-        Debug.Log($"{(isBuff ? "강화" : "약화")} 적용: {amount}, 시간: {time}초");
-
-        yield return new WaitForSeconds(time);
-
-        if (isBuff)
-        {
-            UpdateAllMeleeDamage(-buffAmount);
-            player.bonusMeleeDamage -= buffAmount;
-            buffAmount = 0;
-            buffRoutine = null;
-        }
-        else
-        {
-            UpdateAllMeleeDamage(-debuffAmount);
-            player.bonusMeleeDamage -= debuffAmount;
-            debuffAmount = 0;
-            debuffRoutine = null;
-        }
-        Debug.Log($"{(isBuff ? "강화" : "약화")} 종료");
     }
 
-    IEnumerator ApplyRangeEffect(int amount, float time, bool isBuff)
+    void ApplyRangeEffect(int amount, bool isBuff)
     {
         if (isBuff)
         {
@@ -238,26 +194,9 @@ public class Augment : MonoBehaviour
         }
 
         player.bonusRangeDamage += amount;
-        Debug.Log($"원거리 {(isBuff ? "강화" : "약화")} 적용: {amount}");
-
-        yield return new WaitForSeconds(time);
-
-        if (isBuff)
-        {
-            player.bonusRangeDamage -= rangeBuffAmount;
-            rangeBuffAmount = 0;
-            rangeBuffRoutine = null;
-        }
-        else
-        {
-            player.bonusRangeDamage -= rangeDebuffAmount;
-            rangeDebuffAmount = 0;
-            rangeDebuffRoutine = null;
-        }
-        Debug.Log($"원거리 {(isBuff ? "강화" : "약화")} 종료");
     }
 
-    IEnumerator ApplySpeedEffect(float amount, float time, bool isBuff)
+    void ApplySpeedEffect(float amount, bool isBuff)
     {
         if (isBuff)
         {
@@ -271,23 +210,6 @@ public class Augment : MonoBehaviour
         }
 
         player.bonusSpeed += amount;
-        Debug.Log($"이동속도 {(isBuff ? "강화" : "약화")} 적용: {amount}");
-
-        yield return new WaitForSeconds(time);
-
-        if (isBuff)
-        {
-            player.bonusSpeed -= speedBuffAmount;
-            speedBuffAmount = 0;
-            speedBuffRoutine = null;
-        }
-        else
-        {
-            player.bonusSpeed -= speedDebuffAmount;
-            speedDebuffAmount = 0;
-            speedDebuffRoutine = null;
-        }
-        Debug.Log($"이동속도 {(isBuff ? "강화" : "약화")} 종료");
     }
 
 

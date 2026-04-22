@@ -6,7 +6,7 @@ using UnityEngine;
 public class Weapon : MonoBehaviour
 {
     
-    public enum Type {Melee, Range, Block, RollMelee};
+    public enum Type {Melee, Range, Block, RollMelee, Katana};
     public Type type;
     public int damage;
     public int MaxAmmo;
@@ -27,6 +27,8 @@ public class Weapon : MonoBehaviour
 
     public BoxCollider rollArea;
 
+
+    public Sprite icon;
     public Player player;
 
     private List<Enemy> hitEnemies = new List<Enemy>();
@@ -56,6 +58,12 @@ public class Weapon : MonoBehaviour
         {
             StopCoroutine("Roll");
             StartCoroutine(Roll(duration));
+        }
+        else if (type == Type.Katana)
+        {
+            // ¡¬≈¨∏Ø: »÷µŒ∏£±‚
+            StopCoroutine("KatanaSwing");
+            StartCoroutine("KatanaSwing");
         }
     }
 
@@ -153,5 +161,43 @@ public class Weapon : MonoBehaviour
         }
     }
 
-   
+
+    IEnumerator KatanaSwing()
+    {
+        yield return new WaitForSeconds(0.4f);
+        meleeArea.enabled = true;
+        trailEffect.enabled = true;
+
+        yield return new WaitForSeconds(0.15f);
+        meleeArea.enabled = false;
+
+        yield return new WaitForSeconds(0.3f);
+        trailEffect.enabled = false;
+    }
+
+    public void Deflect()
+    {
+        
+        StopCoroutine("KatanaDeflect");
+        StartCoroutine("KatanaDeflect");
+    }
+
+    IEnumerator KatanaDeflect()
+    {
+        yield return new WaitForSeconds(0.1f);
+        blockArea.enabled = true;
+
+        yield return new WaitForSeconds(0.3f);
+        blockArea.enabled = false;
+
+        yield return new WaitForSeconds(0.2f);
+    }
+
+    
+
+
+
+
+
+
 }
