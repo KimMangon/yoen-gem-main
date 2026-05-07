@@ -44,7 +44,10 @@ public class Blacksmith : MonoBehaviour
             $"<color=#FF8C00>{enterPlayer.weaponPickCount[0]}/5</color>  " +
             $"<color=#8B4513>{enterPlayer.weaponPickCount[3]}/5</color>";
 
-        
+        recipeTexts[1].text =
+        $"<color=#00CC00>{enterPlayer.weaponPickCount[1]}/4</color>";
+
+
     }
 
     public void Craft(int recipeIndex)  // 어떤 레시피인지 인덱스로 받기
@@ -65,6 +68,20 @@ public class Blacksmith : MonoBehaviour
                 RemoveWeaponFromSlot(0); // 망치
             if (enterPlayer.weaponPickCount[3] <= 0)
                 RemoveWeaponFromSlot(3); // 방패
+        }
+
+        if (recipeIndex == 1)
+        {
+            if (enterPlayer.weaponPickCount[1] < 4)
+            {
+                StopCoroutine(Talk());
+                StartCoroutine(Talk());
+                return;
+            }
+            enterPlayer.weaponPickCount[1] -= 4;
+
+            if (enterPlayer.weaponPickCount[1] <= 0)
+                RemoveWeaponFromSlot(1); // 권총 제거
         }
 
         // 아이템 스폰

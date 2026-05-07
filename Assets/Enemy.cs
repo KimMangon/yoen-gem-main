@@ -41,6 +41,24 @@ public class Enemy : MonoBehaviour
 
         if(enemyType != Type.D)
             Invoke("ChaseStart", 2);
+
+        DifficultyData diff = GameManager.Instance.currentDifficulty;
+        if (diff != null)
+        {
+            maxHealth = Mathf.RoundToInt(maxHealth * diff.enemyHealthMult);
+            curHealth = maxHealth;
+
+            Bullet[] bullets = GetComponentsInChildren<Bullet>();
+            foreach (Bullet b in bullets)
+            {
+                if (b.gameObject.tag == "EnemyMeleeBullet")
+                    b.damage = Mathf.RoundToInt(b.damage * diff.enemyDamageMult);
+            }
+        }
+        else
+        {
+            curHealth = maxHealth;
+        }
     }
 
 
@@ -133,6 +151,11 @@ public class Enemy : MonoBehaviour
                 GameObject instantBullet = Instantiate(bullet, transform.position , transform.rotation);
                 Rigidbody rigidBullet = instantBullet.GetComponent<Rigidbody>();
                 rigidBullet.linearVelocity = transform.forward * 20;
+                
+                //난이도 적용
+                Bullet bulletScript = instantBullet.GetComponent<Bullet>();
+                if (bulletScript != null && GameManager.Instance.currentDifficulty != null)
+                    bulletScript.damage = (int)(bulletScript.damage * GameManager.Instance.currentDifficulty.enemyDamageMult);
 
                 yield return new WaitForSeconds(2f);
                 break;
@@ -180,6 +203,14 @@ public class Enemy : MonoBehaviour
                 Bullet bullet = other.GetComponent<Bullet>();
                 damage = bullet.damage;
                 Destroy(other.gameObject);
+
+                if (bullet.isShotgun)
+                {
+                    curHealth -= damage;
+                    GameManager.Instance.ShowDamageText(damage, transform.position);
+                    StartCoroutine(OnDamage(Vector3.zero, false));
+                    return;
+                }
             }
 
             curHealth -= damage;
@@ -244,7 +275,14 @@ public class Enemy : MonoBehaviour
             Player player = target.GetComponent<Player>();
             player.score += score;
             int ranCoin = Random.Range(0, 3);
-            Instantiate(coins[ranCoin], transform.position, Quaternion.identity);
+            GameObject coinObj = Instantiate(coins[ranCoin], transform.position, Quaternion.identity);
+            DifficultyData diff = GameManager.Instance.currentDifficulty;
+            if (diff != null)
+            {
+                Item coinItem = coinObj.GetComponent<Item>();
+                if (coinItem != null)
+                    coinItem.value = Mathf.Max(1, (int)(coinItem.value * diff.coinMult));
+            }
 
 
 

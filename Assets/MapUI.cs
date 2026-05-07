@@ -18,6 +18,10 @@ public class MapUI : MonoBehaviour
     public Sprite startSprite;
     public Sprite mysterySprite;
     // 추후 추가 가능
+    
+    [Header("마커")]
+    public GameObject currentNodeMarker; // 현재 노드 마커 프리팹
+    private GameObject markerInstance;   // 생성된 마커 오브젝트
 
     [Header("노드 간격")]
     public float nodeSpacingX = 100f;   // 가로 간격
@@ -100,6 +104,9 @@ public class MapUI : MonoBehaviour
             nodeObjects.Add(btnObj);
             nodeButtonMap[node] = btnObj;
         }
+
+        UpdateCurrentNodeMarker();
+
     }
 
     // 노드 클릭했을 때
@@ -186,6 +193,25 @@ public class MapUI : MonoBehaviour
                 if (btnObj.GetComponent<EventTrigger>() == null)
                     AddButtonAnimation(btnObj);
             }
+        }
+
+        UpdateCurrentNodeMarker();
+    
+    }
+
+    void UpdateCurrentNodeMarker()
+    {
+        if (markerInstance != null)
+            Destroy(markerInstance);
+
+        MapNode current = GameManager.Instance.currentNode;
+        if (current == null) return;
+
+        if (nodeButtonMap.ContainsKey(current))
+        {
+            GameObject btnObj = nodeButtonMap[current];
+            markerInstance = Instantiate(currentNodeMarker, btnObj.transform);
+            markerInstance.transform.localPosition = Vector3.zero;
         }
     }
 

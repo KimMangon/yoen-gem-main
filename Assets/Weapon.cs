@@ -6,7 +6,7 @@ using UnityEngine;
 public class Weapon : MonoBehaviour
 {
     
-    public enum Type {Melee, Range, Block, RollMelee, Katana};
+    public enum Type {Melee, Range, Block, RollMelee, Katana, Shotgun };
     public Type type;
     public int damage;
     public int MaxAmmo;
@@ -64,6 +64,11 @@ public class Weapon : MonoBehaviour
             // ÁÂÅ¬¸¯: ÈÖµÎ¸£±â
             StopCoroutine("KatanaSwing");
             StartCoroutine("KatanaSwing");
+        }
+        else if (type == Type.Shotgun && curAmmo > 0)
+        {
+            curAmmo--;
+            StartCoroutine("ShotgunShot");
         }
     }
 
@@ -193,7 +198,35 @@ public class Weapon : MonoBehaviour
         yield return new WaitForSeconds(0.2f);
     }
 
-    
+    IEnumerator ShotgunShot()
+    {
+        int pelletCount = 5; // ¹ß»ç ¼ö
+        float spreadAngle = 30f; // ÃÑ °¢µµ
+
+        for (int i = 0; i < pelletCount; i++)
+        {
+            float angle = -spreadAngle * 0.5f + spreadAngle * i / (pelletCount - 1);
+            Quaternion rotation = bulletPos.rotation * Quaternion.Euler(0, angle, 0);
+
+            GameObject instantBullet = Instantiate(bullet, bulletPos.position, rotation);
+            Rigidbody bulletRigid = instantBullet.GetComponent<Rigidbody>();
+            bulletRigid.linearVelocity = rotation * Vector3.forward * 50;
+
+            Bullet bulletScript = instantBullet.GetComponent<Bullet>();
+            if (bulletScript != null)
+            {
+                bulletScript.Init(this.damage, Mathf.RoundToInt(player.bonusRangeDamage * 0.9f));
+                bulletScript.isShotgun = true; // [Ãß°¡] ¼¦°Ç ¿©ºÎ
+            }
+            GameObject instantCase = Instantiate(bulletCase, bulletCasePos.position, bulletCasePos.rotation);
+            Rigidbody caseRigid = instantCase.GetComponent<Rigidbody>();
+            Vector3 caseVec = bulletCasePos.forward * Random.Range(-3, -1) + Vector3.up * Random.Range(1, 3);
+            caseRigid.AddForce(caseVec, ForceMode.Impulse);
+            caseRigid.AddTorque(Vector3.up * 10, ForceMode.Impulse);
+        }
+
+        yield return null;
+    }
 
 
 

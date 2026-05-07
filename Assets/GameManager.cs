@@ -36,6 +36,9 @@ public class GameManager : MonoBehaviour
     public GameObject gamePanel;
     public GameObject overPanel;
     public GameObject settingPanel;
+    public GameObject endingPanel;
+
+    public GameObject firstSetGroup;
 
     public Text maxScoreTxt;
 
@@ -59,6 +62,9 @@ public class GameManager : MonoBehaviour
 
     public Text curScoreText;
     public Text bestText;
+    public Text endingScoreText;
+    public Text endingBestText;
+    public Text endingDifficultyText;
 
     public static GameManager Instance;
 
@@ -94,13 +100,39 @@ public class GameManager : MonoBehaviour
     public bool isMapOpen = false; // 맵 열려있는지
     public GameObject mapPanel; // 맵 패널
     public GameObject restHealthItem; // 휴식맵 체력 아이템 프리팹
-    public Transform restItemPos; // 체력템 스폰위치
+    public Transform[] restItemPositions; // 체력템 스폰위치
 
     [Header("Skill UI")]
     public GameObject skillEGroup;
     public Image skillEImage;    // Skill E Image
     public Image skillECooldown; // Num Image (Fill Radial)
     public Text skillENumText;   // Skill E Num
+
+    [Header("Difficulty")]
+    public GameObject difficultyPanel;
+    public DifficultyData[] difficulties;
+    public DifficultyData currentDifficulty;
+    public Text hardLevelText;
+    public Text selectedDifficultyText;
+    public Text difficultyDescText;
+    public GameObject diffTooltipButton;
+    public Text diffTooltipText;
+    private int hardLevel = 0;
+    private bool isHardSelected = false;
+    //ather main menu
+    public GameObject titleImage;
+    public GameObject maxScoreImage;
+    public GameObject maxScoreText;
+    public GameObject startButton;
+
+    [Header("Resolution")]
+    public GameObject resolutionPanel;
+    public Text resolutionText;
+    public Toggle fullscreenToggle;
+
+    private int[] resolutionWidths = { 1920, 1600, 1280, 1024 };
+    private int[] resolutionHeights = { 1080, 900, 720, 768 };
+    private int currentResolutionIndex = 1;
 
     void Awake()
     {
@@ -111,6 +143,17 @@ public class GameManager : MonoBehaviour
         if (!PlayerPrefs.HasKey("MaxScore"))  // ! 추가
         {
             PlayerPrefs.SetInt("MaxScore", 0);  // 없을 때만 0으로 초기화
+        }
+
+        if (PlayerPrefs.HasKey("ResolutionIndex"))
+        {
+            currentResolutionIndex = PlayerPrefs.GetInt("ResolutionIndex");
+            bool isFullscreen = PlayerPrefs.GetInt("Fullscreen") == 1;
+            Screen.SetResolution(
+                resolutionWidths[currentResolutionIndex],
+                resolutionHeights[currentResolutionIndex],
+                isFullscreen
+            );
         }
 
         foreach (Transform child in augmentGroup.transform)
@@ -140,9 +183,7 @@ public class GameManager : MonoBehaviour
             if (startNode != null)
             {
                 currentNode = startNode;
-                startNode.isCleared = true;
-                foreach (var nextNode in startNode.nextNodes)
-                    nextNode.isAccessible = true;
+                
             }
         }
         isGameStarted = false;
@@ -167,6 +208,35 @@ public class GameManager : MonoBehaviour
 
     }
 
+    public void ShowEnding()
+    {
+        StartCoroutine(ShowEndingDelay());
+    }
+
+    IEnumerator ShowEndingDelay()
+    {
+        yield return new WaitForSeconds(4f);
+
+        if (player.isDead) yield break;
+
+        gamePanel.SetActive(false);
+        endingPanel.SetActive(true);
+        Time.timeScale = 0f;
+
+        endingScoreText.text = scoreTxt.text;
+        endingDifficultyText.text = currentDifficulty.difficultyName;
+        if (currentDifficulty == difficulties[0]) // 이지
+            endingDifficultyText.color = new Color32(255, 68, 68, 255); // #FF4444
+        else // 하드
+            endingDifficultyText.color = new Color32(139, 0, 0, 255); // #8B0000
+
+        int maxScore = PlayerPrefs.GetInt("MaxScore");
+        if (player.score > maxScore)
+        {
+            endingBestText.gameObject.SetActive(true);
+            PlayerPrefs.SetInt("MaxScore", player.score);
+        }
+    }
     public void Restart()
     {
         Time.timeScale = 1f; // 이 줄 추가
@@ -184,6 +254,12 @@ public class GameManager : MonoBehaviour
             zone.gameObject.SetActive(true);
 
         isBattle = true;
+        StartCoroutine(InBattle(false));
+    }
+
+    void StartBoss()
+    {
+        isBattle = true;
         StartCoroutine(InBattle());
     }
 
@@ -198,7 +274,7 @@ public class GameManager : MonoBehaviour
 
         //스타트존 활성화 후 NodeCleared로 맵 열기
         startZone.SetActive(true);
-        NodeCleared();
+        
     }
 
     public void ShowWeaponSwapUI(int weaponIndex, GameObject weaponObj)
@@ -272,6 +348,8 @@ public class GameManager : MonoBehaviour
         weaponShop.SetActive(false);
         blacksmithShop.SetActive(false);
 
+        player.ResetShopState();
+
         player.transform.position = Vector3.up * 1.3f;
 
         player.transform.position = Vector3.up * 1.3f;
@@ -305,7 +383,7 @@ public class GameManager : MonoBehaviour
                 NodeCleared();
                 break;
             case MapNode.NodeType.Combat:
-                StageStart();
+                StageStart(); // StageStart에서 InBattle() 호출
                 break;
             case MapNode.NodeType.Rest:
                 // 휴식 구역 활성화
@@ -316,7 +394,8 @@ public class GameManager : MonoBehaviour
                 StartShop();
                 break;
             case MapNode.NodeType.Boss:
-                StartBoss();
+                isBattle = true;
+                StartCoroutine(InBattle(true)); // [변경] true 전달
                 break;
         }
     }
@@ -332,26 +411,20 @@ public class GameManager : MonoBehaviour
 
     void StartRest()
     {
-
-        Instantiate(restHealthItem, restItemPos.position, Quaternion.identity);
+        
+        int ranPos = Random.Range(0, restItemPositions.Length);
+        Instantiate(restHealthItem, restItemPositions[ranPos].position, Quaternion.identity);
         startZone.SetActive(true);
     }
 
-    void StartBoss() // [추가]
-    {
-        isBattle = true;
-        StartCoroutine(InBattle());
-    }
 
     public void ShowDamageText(int damage, Vector3 position)
     {
-        // 3D 위치를 화면 스크린 좌표로 변환
         Vector3 screenPos = Camera.main.WorldToScreenPoint(position);
 
-        // 텍스트 생성
-        GameObject go = Instantiate(damageTextPrefab, screenPos, Quaternion.identity, canvasTransform);
+        screenPos += new Vector3(Random.Range(-30f, 30f), Random.Range(-20f, 20f), 0);
 
-        // 데미지 값 전달
+        GameObject go = Instantiate(damageTextPrefab, screenPos, Quaternion.identity, canvasTransform);
         go.GetComponent<DamageText>().Setup(damage);
     }
 
@@ -370,9 +443,8 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    IEnumerator InBattle()
+    IEnumerator InBattle(bool isBossStage = false)
     {
-        bool isBossStage = currentNode != null && currentNode.nodeType == MapNode.NodeType.Boss;
 
         if (isBossStage)
         {
@@ -386,7 +458,7 @@ public class GameManager : MonoBehaviour
         }
         else
         {
-            for (int index = 0; index < stage; index++)
+            for (int index = 0; index < stage + currentDifficulty.extraEnemyPerStage; index++)
             {
                 int ran = Random.Range(0, 3);
                 enemyList.Add(ran);
@@ -500,6 +572,7 @@ public class GameManager : MonoBehaviour
             card.SetActive(false);
         activeCards.Clear();
 
+        if (player.isDead) yield break;
         OpenMap();
     }
 
@@ -579,6 +652,13 @@ public class GameManager : MonoBehaviour
         player.rollSkillTimer = 0f;
         player.isRollSkillReady = true;
 
+        if (currentNode.nodeType == MapNode.NodeType.Boss)
+        {
+            startZone.SetActive(false);
+            ShowEnding();
+            return;
+        }
+
         foreach (var node in mapPanel.GetComponentInChildren<MapUI>().GetAllNodes())
         {
             if (node.y == currentNode.y && node != currentNode)
@@ -610,14 +690,137 @@ public class GameManager : MonoBehaviour
         else OpenMap();
     }
 
-    
+    public void OpenDifficultyPanel()
+    {
+        hardLevel = 0;
+        hardLevelText.text = "하드 " + hardLevel + "단계";
+        selectedDifficultyText.text = "현재 난이도 <color=#FF4444>이지</color>";
+        difficultyDescText.text = "<color=#FF4444>이지</color>\n적 체력 -50% 적 공격력 -50% 골드 획득량 +50%";
+
+        titleImage.SetActive(false);
+        maxScoreImage.SetActive(false);
+        maxScoreText.SetActive(false);
+        startButton.SetActive(false);
+        diffTooltipButton.SetActive(false);
+
+        difficultyPanel.SetActive(true);
+    }
+
+    public void SelectEasy()
+    {
+        currentDifficulty = difficulties[0];
+        selectedDifficultyText.text = "현재 난이도 <color=#FF4444>이지</color>";
+        difficultyDescText.text = "<color=#FF4444>이지</color>\n적 체력 -50% 적 공격력 -50% 골드 획득량 +50%";
+        diffTooltipButton.SetActive(false);
+    }
+
+    public void SelectHard()
+    {
+        currentDifficulty = difficulties[hardLevel + 1];
+        selectedDifficultyText.text = "현재 난이도 <color=#8B0000>하드 " + hardLevel + "단계</color>";
+        UpdateHardDesc();
+    }
+
+    public void ConfirmDifficulty() // 체크 버튼에 연결
+    {
+        if (currentDifficulty == null) currentDifficulty = difficulties[0]; // 기본값 이지
+        difficultyPanel.SetActive(false);
+        GameStart();
+    }
+
+    public void ChangeHardLevel(int dir) // -1 또는 +1
+    {
+        hardLevel = Mathf.Clamp(hardLevel + dir, 0, 4);
+        hardLevelText.text = "하드 " + hardLevel + "단계";
+        selectedDifficultyText.text = "현재 난이도 <color=#8B0000>하드 " + hardLevel + "단계</color>";
+        currentDifficulty = difficulties[hardLevel + 1];
+        diffTooltipButton.SetActive(true);
+        UpdateHardDesc();
+    }
+
+    void UpdateHardDesc()
+    {
+        switch (hardLevel)
+        {
+            case 0:
+                difficultyDescText.text = "<color=#8B0000>하드 0단계</color>\n게임의 기본 난이도입니다.";
+                break;
+            case 1:
+                difficultyDescText.text = "<color=#8B0000>하드 1단계</color>\n추가되는 고난 적 체력 +30%";
+                break;
+            case 2:
+                difficultyDescText.text = "<color=#8B0000>하드 2단계</color>\n추가되는 고난 적 공격력 +30%";
+                break;
+            case 3:
+                difficultyDescText.text = "<color=#8B0000>하드 3단계</color>\n추가되는 고난 골드 획득량 -30%";
+                break;
+            case 4:
+                difficultyDescText.text = "<color=#8B0000>하드 4단계</color>\n추가되는 고난 라운드당 생성되는 적 +1";
+                break;
+        }
+    }
+
+    public void ShowTooltip()
+    {
+        diffTooltipText.text = "고난: 해당 단계에서 추가되는 패널티입니다.\n높은 단계의 고난은 이전 단계의 모든 고난을 포함합니다.";
+        diffTooltipText.gameObject.SetActive(true);
+    }
+
+    public void HideTooltip()
+    {
+        diffTooltipText.gameObject.SetActive(false);
+    }
+
+    public void OpenResolutionPanel()
+    {
+        firstSetGroup.SetActive(false);
+        resolutionPanel.SetActive(true);
+        // 현재 해상도 표시
+        resolutionText.text = resolutionWidths[currentResolutionIndex] + " x " + resolutionHeights[currentResolutionIndex];
+        fullscreenToggle.isOn = Screen.fullScreen;
+    }
+
+    public void CloseResolutionPanel()
+    {
+        resolutionPanel.SetActive(false);
+        firstSetGroup.SetActive(true);
+    }
+
+    public void ChangeResolution(int dir)
+    {
+        currentResolutionIndex = Mathf.Clamp(currentResolutionIndex + dir, 0, resolutionWidths.Length - 1);
+        resolutionText.text = resolutionWidths[currentResolutionIndex] + " x " + resolutionHeights[currentResolutionIndex];
+    }
+
+    public void ApplyResolution()
+    {
+        Screen.SetResolution
+       (
+       resolutionWidths[currentResolutionIndex],
+       resolutionHeights[currentResolutionIndex],
+       fullscreenToggle.isOn 
+       );
+
+        // [추가] 설정 저장
+        PlayerPrefs.SetInt("ResolutionIndex", currentResolutionIndex);
+        PlayerPrefs.SetInt("Fullscreen", fullscreenToggle.isOn ? 1 : 0);
+        PlayerPrefs.Save();
+    }
 
     void Update()
     {
         if (Input.GetButtonDown("Cancel"))
         {
-            if (isSetting) CloseSetting();
-            else OpenSetting();
+            if (isSetting)
+            {
+                // [변경] 해상도 패널 열려있으면 해상도 패널만 닫기
+                if (resolutionPanel.activeSelf)
+                    CloseResolutionPanel();
+                else
+                    CloseSetting();
+            }
+            else
+                OpenSetting();
         }
 
         ToggleMap();
@@ -626,7 +829,26 @@ public class GameManager : MonoBehaviour
         {
             playTime += Time.deltaTime;
         }
-   
+
+#if UNITY_EDITOR
+        if (Input.GetKeyDown(KeyCode.F1)) // 현재 노드 즉시 클리어
+        {
+            // 모든 적 즉시 제거
+            Enemy[] enemies = FindObjectsByType<Enemy>(FindObjectsSortMode.None);
+            foreach (Enemy e in enemies)
+                Destroy(e.gameObject);
+
+            enemyCntA = 0;
+            enemyCntB = 0;
+            enemyCntC = 0;
+            enemyCntD = 0;
+
+            NodeCleared();
+        }
+        if (Input.GetKeyDown(KeyCode.F2)) ShowEnding();  // 엔딩 즉시 표시
+        if (Input.GetKeyDown(KeyCode.F3)) player.health = player.maxHealth; // 체력 풀회복
+#endif
+
     }
 
 

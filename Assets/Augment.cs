@@ -40,41 +40,55 @@ public class Augment : MonoBehaviour
         augmentLevel = texts[1];
     }
 
-    private void LateUpdate()
+    void LateUpdate()
+{
+    augmentName.text = data.augmentName;
+
+    int nextLevel = Mathf.Min(level, data.damages.Length - 1);
+
+    switch (data.augmentType)
     {
-        augmentName.text = data.augmentName;
-
-        int nextLevel = Mathf.Min(level, data.damages.Length - 1);
-
-        switch (data.augmentType)
-        {
             case AugmentData.AugmentType.Melee:
                 int mVal = (int)data.damages[nextLevel];
-                string mAction = data.augmentId == 0 ? "강화" : "약화";
-                augmentLevel.text = "Lv." + level + "\n" + mVal + " " + mAction;
+                if (data.augmentId == 0)
+                    augmentLevel.text = "Lv." + level + "\n<color=#6AB4FF>" + mVal + " 강화</color>";
+                else
+                    augmentLevel.text = "Lv." + level + "\n<color=#FF6464>" + mVal + " 약화</color>";
                 break;
 
             case AugmentData.AugmentType.Bullet:
                 int rVal = (int)data.damages[nextLevel];
-                string rAction = data.augmentId == 2 ? "강화" : "약화";
-                augmentLevel.text = "Lv." + level + "\n" + rVal + " " + rAction;
+                if (data.augmentId == 2)
+                    augmentLevel.text = "Lv." + level + "\n<color=#6AB4FF>" + rVal + " 강화</color>";
+                else
+                    augmentLevel.text = "Lv." + level + "\n<color=#FF6464>" + rVal + " 약화</color>";
                 break;
 
             case AugmentData.AugmentType.Health:
                 int hVal = (int)data.damages[nextLevel];
-                string hAction = data.augmentId == 4 ? "회복" : "감소";
-                augmentLevel.text = "Lv." + level + "\n" + hVal + " " + hAction;
+                if (data.augmentId == 4)
+                    augmentLevel.text = "Lv." + level + "\n<color=#6AB4FF>" + hVal + " 회복</color>";
+                else
+                    augmentLevel.text = "Lv." + level + "\n<color=#FF6464>" + hVal + " 감소</color>";
                 break;
 
             case AugmentData.AugmentType.Shoe:
                 float sVal = data.damages[nextLevel];
-                string sAction = data.augmentId == 6 ? "강화" : "약화";
-                augmentLevel.text = "Lv." + level + "\n" + sVal + " " + sAction;
+                if (data.augmentId == 6)
+                    augmentLevel.text = "Lv." + level + "\n<color=#6AB4FF>" + sVal + " 강화</color>";
+                else
+                    augmentLevel.text = "Lv." + level + "\n<color=#FF6464>" + sVal + " 약화</color>";
+                break;
+
+            case AugmentData.AugmentType.Reload:
+                float reloadDisplayVal = data.damages[nextLevel];
+                augmentLevel.text = "Lv." + level + "\n<color=#6AB4FF>" + reloadDisplayVal + "% 감소</color>";
                 break;
 
             default:
                 augmentLevel.text = "Lv." + level;
                 break;
+
         }
     }
 
@@ -129,6 +143,13 @@ public class Augment : MonoBehaviour
                         GameManager.Instance.skillEGroup.SetActive(true);
                         // 나머지 플레이어에서 실행
                     }
+                    break;
+
+                case AugmentData.AugmentType.Reload:
+                    float reloadVal = data.damages[level] / 100f; // % → 소수
+                    player.reloadSpeedBonus += reloadVal;
+                    if (player.reloadSpeedBonus >= 0.9f) // 최대 90% 감소
+                        player.reloadSpeedBonus = 0.9f;
                     break;
             }
         }

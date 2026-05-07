@@ -9,8 +9,8 @@ public class MapGenerator : MonoBehaviour
     public int pathCount = 6;
 
     [Header("노드 타입 확률")]
-    public float shopChance = 0.08f;
-    public float restChance = 0.15f;
+    public float shopChance = 0.10f;
+    public float restChance = 0.13f;
 
     private MapNode[,] grid;
     public List<MapNode> allNodes = new List<MapNode>();
@@ -45,6 +45,11 @@ public class MapGenerator : MonoBehaviour
         startNode.isAccessible = true;
         grid[startX, 0] = startNode;
         allNodes.Add(startNode);
+
+        foreach (var node in allNodes)
+        {
+            if (node.y == height - 2) node.nodeType = MapNode.NodeType.Shop; // [추가] 보스 전 행 상점 고정
+        }
 
         // [변경] 마지막 행 보스 노드 하나로 통합 (중앙 x)
         int bossX = width / 2;
@@ -124,7 +129,7 @@ public class MapGenerator : MonoBehaviour
         float rand = Random.Range(0f, 1f);
         if (rand < shopChance) return MapNode.NodeType.Shop;
         if (rand < shopChance + restChance) return MapNode.NodeType.Rest;
-        if (rand < shopChance + restChance + 0.15f) return MapNode.NodeType.Mystery;
+        if (rand < shopChance + restChance + 0.20f) return MapNode.NodeType.Mystery;
         return MapNode.NodeType.Combat;
     }
 }

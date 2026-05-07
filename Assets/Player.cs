@@ -21,14 +21,15 @@ public class Player : MonoBehaviour
     public int score;
     public int bonusMeleeDamage = 0; // 강화/약화 수치를 저장할 변수
     public int bonusRangeDamage; // 원거리(총알) 추가 데미지
-    public float bonusSpeed = 0; // 추가된 이동속도 보너스
+    public float bonusSpeed = 0; // 이동속도 보너스
+    public float reloadSpeedBonus = 0f; // 재장전 시간
 
     public int maxammo;
     public int maxcoin;
     public int maxHealth;
     public int maxHasGrenades;
 
-    public int[] weaponPickCount = new int[4];
+    public int[] weaponPickCount = new int[6];
     public int[] weaponSlots = new int[3] { -1, -1, -1};
     public int equipWeaponIndex = -1;
 
@@ -57,7 +58,7 @@ public class Player : MonoBehaviour
     bool isReload;
     bool isDamage;
     bool isShop;
-    bool isDead;
+    public bool isDead;
 
     //e스킬 변수들
     public float rollSkillCooldown = 20f; // 쿨타임 고정
@@ -200,7 +201,7 @@ public class Player : MonoBehaviour
         fireDelay += Time.deltaTime;
         isFireReady = equipWeapon.rate < fireDelay;
 
-        if(fDown && isFireReady &&!isDodge && !isSwap && !isShop && !isDead)
+        if(fDown && isFireReady &&!isDodge && !isSwap && !isShop && !isDead && !GameManager.Instance.isAugmentActive)
         {
             equipWeapon.Use();
             if(equipWeapon.type == Weapon.Type.Melee)
@@ -218,6 +219,10 @@ public class Player : MonoBehaviour
             else if (equipWeapon.type == Weapon.Type.Katana)
             {
                 anim.SetTrigger("doSwing"); // 망치 애니메이션 재활용
+            }
+            else if (equipWeapon.type == Weapon.Type.Shotgun)
+            {
+                anim.SetTrigger("doShot");
             }
 
             fireDelay = 0;
@@ -289,9 +294,11 @@ public class Player : MonoBehaviour
         if (rDown && !isJump && !isDodge && !isSwap && isFireReady && !isShop && !isDead)
         {
             anim.SetTrigger("doReload");
+            Debug.Log("reloadSpeedBonus: " + reloadSpeedBonus);
+            anim.SetFloat("reloadSpeed", 1f / (1f - reloadSpeedBonus));
             isReload = true;
 
-            Invoke("ReloadOut", 2.5f);
+            Invoke("ReloadOut", 2.5f * (1f - reloadSpeedBonus));
         }
 
 
@@ -302,8 +309,9 @@ public class Player : MonoBehaviour
 
     void ReloadOut()
     {
-        int reAmmo = ammo < equipWeapon.MaxAmmo ? ammo : equipWeapon.MaxAmmo;
-        equipWeapon.curAmmo = reAmmo;
+        int needed = equipWeapon.MaxAmmo - equipWeapon.curAmmo;
+        int reAmmo = ammo < needed ? ammo : needed;
+        equipWeapon.curAmmo += reAmmo;
         ammo -= reAmmo;
         isReload = false;
     }
@@ -373,6 +381,8 @@ public class Player : MonoBehaviour
             {
                 Item item = nearObject.GetComponent<Item>();
                 int weaponIndex = item.value;
+                Debug.Log("무기 인덱스: " + weaponIndex);
+                Debug.Log("hasWeapons: " + hasWeapons[weaponIndex]);
 
                 // 이미 갖고 있는 무기면 횟수만 증가
                 if (hasWeapons[weaponIndex])
@@ -430,8 +440,14 @@ public class Player : MonoBehaviour
                 Blacksmith blacksmith = nearObject.GetComponent<Blacksmith>();
                 blacksmith.Enter(this);
                 isShop = true;
+                Debug.Log("isShop: " + isShop);
             }
         }
+    }
+
+    public void ResetShopState()
+    {
+        isShop = false;
     }
 
     void RollSkill()

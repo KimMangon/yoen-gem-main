@@ -6,7 +6,7 @@ public class Bullet : MonoBehaviour
     public int damage;
     public bool isMelee;
     public bool isRock;
-
+    public bool isShotgun = false;
 
     public void Init(int baseDamage, int bonusDamage)
     {

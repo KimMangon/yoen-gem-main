@@ -3,7 +3,7 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "Augment", menuName = "Scriptable/Augment")]
 public class AugmentData : ScriptableObject
 {
-    public enum AugmentType { Melee, Bullet, Health, Shoe, editWeapon }
+    public enum AugmentType { Melee, Bullet, Health, Shoe, editWeapon, Reload }
 
     [Header("Main Info")]
     public AugmentType augmentType; // 어떤 공격을 강화할지
