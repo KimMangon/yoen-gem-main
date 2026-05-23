@@ -158,46 +158,23 @@ public class Augment : MonoBehaviour
             level++;
     }
 
-    void UpdateAllMeleeDamage(int amount)
-    {
-        if (player.weapons[0] != null)
-        {
-            Weapon mainWep = player.weapons[0].GetComponent<Weapon>();
-            if (mainWep != null)
-                mainWep.damage += amount;
-        }
-
-        if (player.weapons[4] != null)
-        {
-            Weapon katana = player.weapons[4].GetComponent<Weapon>();
-            if (katana != null) katana.damage += amount;
-        }
-
-        for (int i = 0; i < player.rollWeapons.Length; i++)
-        {
-            if (player.rollWeapons[i] == null) continue;
-            Weapon rollWep = player.rollWeapons[i].GetComponentInChildren<Weapon>(true);
-            if (rollWep != null)
-                rollWep.damage += amount;
-        }
-    }
 
     void ApplyBuff(int amount, bool isBuff)
     {
         if (isBuff)
         {
-            UpdateAllMeleeDamage(-buffAmount);
+            player.UpdateAllMeleeDamage(-buffAmount);
             player.bonusMeleeDamage -= buffAmount;
             buffAmount = amount;
         }
         else
         {
-            UpdateAllMeleeDamage(-debuffAmount);
+            player.UpdateAllMeleeDamage(-debuffAmount);
             player.bonusMeleeDamage -= debuffAmount;
             debuffAmount = amount;
         }
 
-        UpdateAllMeleeDamage(amount);
+        player.UpdateAllMeleeDamage(amount);
         player.bonusMeleeDamage += amount;
     }
 

@@ -12,6 +12,7 @@ public class MapGenerator : MonoBehaviour
     public float shopChance = 0.10f;
     public float restChance = 0.13f;
 
+
     private MapNode[,] grid;
     public List<MapNode> allNodes = new List<MapNode>();
 
@@ -51,7 +52,13 @@ public class MapGenerator : MonoBehaviour
             if (node.y == height - 2) node.nodeType = MapNode.NodeType.Shop; // [추가] 보스 전 행 상점 고정
         }
 
-        // [변경] 마지막 행 보스 노드 하나로 통합 (중앙 x)
+        //6층 노드들 보물방으로 고정
+        foreach (var node in allNodes)
+        {
+            if (node.y == 6) node.nodeType = MapNode.NodeType.Treasure;
+        }
+
+        // 마지막 행 보스 노드 하나로 통합 (중앙 x)
         int bossX = width / 2;
         MapNode bossNode = new MapNode(bossX, height - 1, MapNode.NodeType.Boss);
         grid[bossX, height - 1] = bossNode;
@@ -60,7 +67,7 @@ public class MapGenerator : MonoBehaviour
         // 경로 연결
         foreach (var path in paths)
         {
-            // [변경] 경로 첫 노드(y=1)를 시작노드와 연결
+            // 경로 첫 노드(y=1)를 시작노드와 연결
             if (path.Count > 0)
             {
                 Vector2Int first = path[0];

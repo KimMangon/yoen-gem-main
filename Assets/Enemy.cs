@@ -197,20 +197,30 @@ public class Enemy : MonoBehaviour
             if (isHit) return; 
 
             int damage = 0;
-            if (other.tag == "Melee") damage = other.GetComponent<Weapon>().damage;
+            if (other.tag == "Melee") damage = (int)(other.GetComponent<Weapon>().damage * GameManager.Instance.player.damageMultiplier);
             else
             {
                 Bullet bullet = other.GetComponent<Bullet>();
-                damage = bullet.damage;
+                damage = (int)(bullet.damage * GameManager.Instance.player.damageMultiplier);
                 Destroy(other.gameObject);
 
                 if (bullet.isShotgun)
                 {
-                    curHealth -= damage;
+                    curHealth -= (int)(damage * GameManager.Instance.player.damageMultiplier);
                     GameManager.Instance.ShowDamageText(damage, transform.position);
                     StartCoroutine(OnDamage(Vector3.zero, false));
                     return;
                 }
+            }
+
+            if (RelicManager.Instance.isBonusDamageActive)
+            {
+                foreach (var relic in RelicManager.Instance.ownedRelics)
+                {
+                    if (relic.effectType == RelicData.RelicEffectType.BonusDamageEveryN)
+                        damage += (int)relic.values[0];
+                }
+                RelicManager.Instance.isBonusDamageActive = false;
             }
 
             curHealth -= damage;
@@ -225,7 +235,19 @@ public class Enemy : MonoBehaviour
             Weapon weapon = other.GetComponent<Weapon>();
             if (weapon != null)
             {
+                int damage = (int)(weapon.damage * GameManager.Instance.player.damageMultiplier);
+                if (RelicManager.Instance.isBonusDamageActive)
+                {
+                    foreach (var relic in RelicManager.Instance.ownedRelics)
+                    {
+                        if (relic.effectType == RelicData.RelicEffectType.BonusDamageEveryN)
+                            damage += (int)relic.values[0];
+                    }
+                    RelicManager.Instance.isBonusDamageActive = false;
+                }
+
                 curHealth -= weapon.damage; 
+
                 isHit = true;
                 GameManager.Instance.ShowDamageText(weapon.damage, transform.position);
                 StartCoroutine(OnDamage(Vector3.zero, false));
@@ -264,6 +286,8 @@ public class Enemy : MonoBehaviour
             isChase = false;
             nav.enabled = false;
             anim.SetTrigger("doDie");
+
+            RelicManager.Instance.OnKill();
 
             if (GetComponent<Boss>() != null)
             {

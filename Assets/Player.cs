@@ -79,6 +79,12 @@ public class Player : MonoBehaviour
     GameObject nearObject;
     public Weapon equipWeapon;
 
+    [Header("Relic")]
+    public float dodgeSpeedMultiplier = 1f; // 도약 거리 배율
+    public float damageMultiplier = 1f;     // 데미지 배율
+    public float receiveDamageMultiplier = 1f; // 받는 데미지 배율
+    public bool healToAttack = false;       // 회복 불가 유물
+    int healAccumulator = 0;
 
 
     void Awake()
@@ -201,10 +207,11 @@ public class Player : MonoBehaviour
         fireDelay += Time.deltaTime;
         isFireReady = equipWeapon.rate < fireDelay;
 
-        if(fDown && isFireReady &&!isDodge && !isSwap && !isShop && !isDead && !GameManager.Instance.isAugmentActive)
+        if(fDown && isFireReady &&!isDodge && !isSwap && !isShop && !isDead && !GameManager.Instance.isAugmentActive && !GameManager.Instance.isStatOpen)
         {
             equipWeapon.Use();
-            if(equipWeapon.type == Weapon.Type.Melee)
+            RelicManager.Instance.OnAttack();
+            if (equipWeapon.type == Weapon.Type.Melee)
             {
                 anim.SetTrigger("doSwing");
             }
@@ -326,7 +333,7 @@ public class Player : MonoBehaviour
         if (jDown && moveVec != Vector3.zero && !isJump && !isDodge && !isSwap && !isShop && !isDead)
         {
             dodgeVec = moveVec;
-            speed *= 2;
+            speed *= 2 * dodgeSpeedMultiplier;
             anim.SetTrigger("doDodge");
             isDodge = true;
 
@@ -336,7 +343,7 @@ public class Player : MonoBehaviour
 
     void DodgeOut()
     {
-        speed *= 0.5f;
+        speed *= 0.5f / dodgeSpeedMultiplier;
         isDodge = false;
     }
 
@@ -537,9 +544,7 @@ public class Player : MonoBehaviour
                         coin = maxcoin;
                     break;
                 case Item.Type.Heart:
-                    health += item.value;
-                    if (health > maxHealth)
-                        health = maxHealth;
+                    Heal(item.value);
                     break;
                 case Item.Type.Grenade:
                     grenades[hasGrenades].SetActive(true);
@@ -559,8 +564,8 @@ public class Player : MonoBehaviour
             if (!isDamage)
             {
                 Bullet enemyBullet = other.GetComponent<Bullet>();
-                health -= enemyBullet.damage;
-                if(other.GetComponent<Rigidbody>() != null)
+                health -= (int)(enemyBullet.damage * receiveDamageMultiplier);
+                if (other.GetComponent<Rigidbody>() != null)
                     Destroy(other.gameObject);
 
                 bool isBossAtk = other.name == "Boss Melee Area";
@@ -614,6 +619,9 @@ public class Player : MonoBehaviour
 
     public void OnDie()
     {
+        if (RelicManager.Instance.CheckRevive())
+            return;
+
         anim.SetTrigger("doDie");
         isDead = true;
         manger.GameOver();
@@ -660,15 +668,47 @@ public class Player : MonoBehaviour
     }
     public void Heal(int amount)
     {
-        health += amount;
-
-        // 최대 체력(maxHealth)을 넘지 않도록 제한
-        if (health > maxHealth)
+        if (healToAttack)
         {
-            health = maxHealth;
+            healAccumulator += amount;
+            int attackBonus = healAccumulator / 40;
+            healAccumulator %= 40; // 나머지 유지
+            if (attackBonus > 0)
+            {
+                bonusMeleeDamage += attackBonus;
+                bonusRangeDamage += attackBonus;
+                UpdateAllMeleeDamage(attackBonus);
+            }
+            return;
         }
 
-        Debug.Log($"체력 회복! 현재 체력: {health}");
+        health += amount;
+        if (health > maxHealth)
+            health = maxHealth;
+    }
+
+    public void UpdateAllMeleeDamage(int amount)
+    {
+        if (weapons[0] != null)
+        {
+            Weapon mainWep = weapons[0].GetComponent<Weapon>();
+            if (mainWep != null)
+                mainWep.damage += amount;
+        }
+
+        if (weapons[4] != null)
+        {
+            Weapon katana = weapons[4].GetComponent<Weapon>();
+            if (katana != null) katana.damage += amount;
+        }
+
+        for (int i = 0; i < rollWeapons.Length; i++)
+        {
+            if (rollWeapons[i] == null) continue;
+            Weapon rollWep = rollWeapons[i].GetComponentInChildren<Weapon>(true);
+            if (rollWep != null)
+                rollWep.damage += amount;
+        }
     }
 
 

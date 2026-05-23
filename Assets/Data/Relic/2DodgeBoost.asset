@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 715c700fe581421479509389a6671349, type: 3}
+  m_Name: 2DodgeBoost
+  m_EditorClassIdentifier: 
+  relicName: "\uB3C4\uC57D \uC2A4\uD504\uB9C1"
+  relicId: 2
+  relicDesc: "\uAD6C\uB974\uAE30 \uAC70\uB9AC 1.5\uBC30 \uC99D\uAC00"
+  relicIcon: {fileID: -843555459, guid: 411d0c308cb3e074d99bdb7142fd1c32, type: 3}
+  effectType: 2
+  values:
+  - 1.5

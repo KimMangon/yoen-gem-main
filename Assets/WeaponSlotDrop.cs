@@ -27,6 +27,8 @@ public class WeaponSlotDrop : MonoBehaviour, IDropHandler
         else if (gameManager.player.equipWeaponIndex == toSlot)
             gameManager.player.equipWeaponIndex = fromSlot;
 
+        GameManager.Instance.UpdateWeaponSlots();
+
         Debug.Log($"½½·Ô {fromSlot} ¡ê ½½·Ô {toSlot} ±³È¯ ¿Ï·á");
     }
 

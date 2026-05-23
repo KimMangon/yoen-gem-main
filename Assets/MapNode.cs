@@ -10,7 +10,8 @@ public class MapNode
         Shop,
         Boss,
         Start,
-        Mystery
+        Mystery,
+        Treasure
     }
 
     public NodeType nodeType;   // 노드 타입

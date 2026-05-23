@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
 using UnityEngine.SceneManagement;
+using UnityEngine.EventSystems;
 public class GameManager : MonoBehaviour
 {
 
@@ -19,7 +20,6 @@ public class GameManager : MonoBehaviour
     
     public int stage;
     public float playTime;
-    public float augmentTimer;
     public bool isSetting = false;
     public bool isBattle;
     public int enemyCntA;
@@ -39,6 +39,7 @@ public class GameManager : MonoBehaviour
     public GameObject endingPanel;
 
     public GameObject firstSetGroup;
+    public GameObject inventoryGroup;
 
     public Text maxScoreTxt;
 
@@ -78,7 +79,6 @@ public class GameManager : MonoBehaviour
     [Header("Augment")]
     public GameObject augmentPanel;     
     public GameObject augmentGroup;
-    private float selectionTimer;
     public bool isAugmentActive;
 
     public List<GameObject> allCards = new List<GameObject>();
@@ -133,6 +133,45 @@ public class GameManager : MonoBehaviour
     private int[] resolutionWidths = { 1920, 1600, 1280, 1024 };
     private int[] resolutionHeights = { 1080, 900, 720, 768 };
     private int currentResolutionIndex = 1;
+
+    [Header("Stat Panel")]
+    public GameObject statPanel;
+    public bool isStatOpen = false;
+
+    public Text statHealthText;
+    public Text statWeaponDamageText;
+    public Text statWeaponRateText;
+    public Text statMeleeBonusText;
+    public Text statRangeBonusText;
+    public Text statSpeedText;
+    public Text statSpeedBonusText;
+    public Transform statRelicContent; // 유물 효과 생성 위치
+
+    public GameObject relicTextPrefab; // 유물 이름 텍스트 프리팹
+    private List<GameObject> relicTextObjects = new List<GameObject>();
+
+    [Header("Treasure Relic")]
+    public GameObject treasurePanel;
+    public GameObject closeChest;
+    public GameObject openChest;
+
+    public GameObject coinEffectPrefab; // 코인 스프라이트 프리팹
+    public Transform treasureCoinsParent; // 코인 생성 위치
+
+    public RelicData[] allRelics; // 모든 유물 배열
+    private RelicData currentTreasureRelic; // 현재 보물방 유물
+    public GameObject relicBackgroundImage;
+    public Image relicIcon;      // 유물 아이콘 이미지
+
+    [Header("Tooltip Relic")]
+    public GameObject tooltipPanel;
+    public Text tooltipRelicName;
+    public Text tooltipRelicDesc;
+    public Image tooltipRelicIcon;
+
+    private Coroutine hideTooltipCoroutine;
+
+
 
     void Awake()
     {
@@ -247,7 +286,6 @@ public class GameManager : MonoBehaviour
 
     public void StageStart()
     {
-        augmentPickCount = 0; // 스테이지 시작마다 초기화
         startZone.SetActive(false);
 
         foreach(Transform zone in enemyZones)
@@ -370,9 +408,10 @@ public class GameManager : MonoBehaviour
 
         if (node.nodeType == MapNode.NodeType.Mystery)
         {
-            int rand = Random.Range(0, 3);
-            node.mysteryActualType = rand == 0 ? MapNode.NodeType.Shop :
-                                     rand == 1 ? MapNode.NodeType.Rest :
+            int rand = Random.Range(0, 100);
+            node.mysteryActualType = rand < 5 ? MapNode.NodeType.Treasure :  // 5%
+                                     rand < 38 ? MapNode.NodeType.Shop :
+                                     rand < 71 ? MapNode.NodeType.Rest :
                                                  MapNode.NodeType.Combat;
         }
         MapNode.NodeType actualType = node.nodeType == MapNode.NodeType.Mystery ? node.mysteryActualType : node.nodeType;
@@ -392,6 +431,9 @@ public class GameManager : MonoBehaviour
             case MapNode.NodeType.Shop:
                 // 상점 활성화
                 StartShop();
+                break;
+            case MapNode.NodeType.Treasure:
+                StartTreasure();
                 break;
             case MapNode.NodeType.Boss:
                 isBattle = true;
@@ -503,10 +545,9 @@ public class GameManager : MonoBehaviour
 
     void OpenAugmentUI()
     {
-        if (augmentPickCount >= stage + 2) return;
 
         isAugmentActive = true;
-        selectionTimer = 5f;
+        inventoryGroup.SetActive(false);
         augmentPanel.SetActive(true);
         augmentSelectText.gameObject.SetActive(true);
 
@@ -536,7 +577,7 @@ public class GameManager : MonoBehaviour
     public void CloseAugmentUI()
     {
         isAugmentActive = false;
-        selectionTimer = 0;
+        inventoryGroup.SetActive(true);
         augmentPanel.SetActive(false);
         augmentSelectText.gameObject.SetActive(false);
 
@@ -561,16 +602,14 @@ public class GameManager : MonoBehaviour
     IEnumerator CloseAfterEffect(AugmentCardEffect effect)
     {
         isAugmentActive = false;
-        selectionTimer = 0;
-        augmentPickCount++;
 
-        // GameManager에서 연출 코루틴 직접 실행
         yield return StartCoroutine(effect.SelectEffect());
 
         augmentPanel.SetActive(false);
         foreach (GameObject card in activeCards)
             card.SetActive(false);
         activeCards.Clear();
+        inventoryGroup.SetActive(true);
 
         if (player.isDead) yield break;
         OpenMap();
@@ -807,6 +846,184 @@ public class GameManager : MonoBehaviour
         PlayerPrefs.Save();
     }
 
+    public void OpenStat()
+    {
+        isStatOpen = true;
+        statPanel.SetActive(true);
+    }
+
+    public void CloseStat()
+    {
+        isStatOpen = false;
+        statPanel.SetActive(false);
+    }
+
+    public void UpdateWeaponSlots()
+    {
+        UpdateWeaponSlotImage(weapon1Img, 0);
+        UpdateWeaponSlotImage(weapon2Img, 1);
+        UpdateWeaponSlotImage(weapon3Img, 2);
+    }
+
+    void StartTreasure()
+    {
+        // 이미 가진 유물 제외하고 랜덤 뽑기
+        List<RelicData> availableRelics = new List<RelicData>();
+        foreach (var relic in allRelics)
+        {
+            if (!RelicManager.Instance.HasRelic(relic.relicId))
+                availableRelics.Add(relic);
+        }
+
+        if (availableRelics.Count > 0)
+        {
+            currentTreasureRelic = availableRelics[Random.Range(0, availableRelics.Count)];
+        }
+
+        relicBackgroundImage.SetActive(false);
+        treasurePanel.SetActive(true);
+        closeChest.SetActive(true);
+        openChest.SetActive(false);
+        Time.timeScale = 0f;
+    }
+
+    public void OpenChest()
+    {
+        closeChest.SetActive(false);
+        openChest.SetActive(true);
+        StartCoroutine(CoinEffect());
+        player.coin += 1000;
+
+        // 유물 아이콘 표시
+        if (currentTreasureRelic != null)
+        {
+            relicIcon.sprite = currentTreasureRelic.relicIcon;
+            relicIcon.SetNativeSize();
+            relicBackgroundImage.SetActive(true);
+        }
+            
+    }
+
+    public void CloseTreasure()
+    {
+        treasurePanel.SetActive(false);
+        Time.timeScale = 1f;
+        startZone.SetActive(true);
+    }
+
+    IEnumerator CoinEffect()
+    {
+        int coinCount = Random.Range(9, 15);
+        for (int i = 0; i < coinCount; i++)
+        {
+            GameObject coin = Instantiate(coinEffectPrefab, treasureCoinsParent);
+            StartCoroutine(MoveCoin(coin));
+            yield return new WaitForSecondsRealtime(0.05f);
+        }
+    }
+
+    IEnumerator MoveCoin(GameObject coin)
+    {
+        RectTransform rect = coin.GetComponent<RectTransform>();
+        rect.anchoredPosition = Vector2.zero;
+
+        float angle = Random.Range(20f, 160f);
+        float rad = angle * Mathf.Deg2Rad;
+        float distance = Random.Range(500f, 800f); // 더 높이
+        Vector2 direction = new Vector2(Mathf.Cos(rad), Mathf.Sin(rad)) * distance;
+
+        float t = 0;
+        float duration = Random.Range(0.4f, 0.7f); // 더 오래
+        Vector2 startPos = Vector2.zero;
+
+        while (t < duration)
+        {
+            t += Time.unscaledDeltaTime;
+            float ratio = t / duration;
+            float gravity = -ratio * ratio * distance * 1.2f;
+            rect.anchoredPosition = Vector2.Lerp(startPos, startPos + direction, ratio) + Vector2.up * gravity;
+
+            // 80% 이후부터 투명해지기
+            CanvasGroup cg = coin.GetComponent<CanvasGroup>();
+            if (cg != null) cg.alpha = ratio < 0.8f ? 1f : 1f - (ratio - 0.8f) / 0.2f;
+
+            yield return null;
+        }
+
+        Destroy(coin);
+    }
+
+    public void ShowRelicTooltip()
+    {
+        if (hideTooltipCoroutine != null)
+            StopCoroutine(hideTooltipCoroutine);
+
+        if (currentTreasureRelic != null)
+        {
+            tooltipRelicName.text = currentTreasureRelic.relicName;
+            tooltipRelicDesc.text = currentTreasureRelic.relicDesc;
+            tooltipRelicIcon.sprite = currentTreasureRelic.relicIcon;
+            tooltipPanel.SetActive(true);
+        }
+    }
+
+    public void HideRelicTooltip()
+    {
+        hideTooltipCoroutine = StartCoroutine(HideTooltipDelay());
+    }
+
+    IEnumerator HideTooltipDelay()
+    {
+        yield return new WaitForSecondsRealtime(0.1f);
+        tooltipPanel.SetActive(false);
+    }
+
+    public void AcquireRelic()
+    {
+        if (currentTreasureRelic != null)
+        {
+            RelicManager.Instance.AddRelic(currentTreasureRelic);
+            UpdateRelicStatUI(); // [추가]
+        }
+        HideRelicTooltip();
+        CloseTreasure();
+    }
+
+    public void PassRelic()
+    {
+        HideRelicTooltip();
+        CloseTreasure();
+    }
+
+    void UpdateRelicStatUI()
+    {
+        
+        foreach (var obj in relicTextObjects)
+            Destroy(obj);
+        relicTextObjects.Clear();
+
+        foreach (var relic in RelicManager.Instance.ownedRelics)
+        {
+            GameObject textObj = Instantiate(relicTextPrefab, statRelicContent);
+            textObj.GetComponent<Text>().text = relic.relicName;
+            textObj.GetComponent<Text>().color = new Color32(200, 160, 30, 255);
+
+            relicTextObjects.Add(textObj);
+        }
+    }
+
+    public void ShowStatRelicTooltip(RelicData relic)
+    {
+        if (hideTooltipCoroutine != null)
+            StopCoroutine(hideTooltipCoroutine);
+
+        tooltipRelicName.text = relic.relicName;
+        tooltipRelicDesc.text = relic.relicDesc;
+        tooltipRelicIcon.sprite = relic.relicIcon;
+        tooltipPanel.SetActive(true);
+    }
+
+
     void Update()
     {
         if (Input.GetButtonDown("Cancel"))
@@ -824,6 +1041,12 @@ public class GameManager : MonoBehaviour
         }
 
         ToggleMap();
+
+        if (Input.GetButtonDown("statusKey"))
+        {
+            if (isStatOpen) CloseStat();
+            else OpenStat();
+        }
 
         if (isBattle)
         {
@@ -847,6 +1070,7 @@ public class GameManager : MonoBehaviour
         }
         if (Input.GetKeyDown(KeyCode.F2)) ShowEnding();  // 엔딩 즉시 표시
         if (Input.GetKeyDown(KeyCode.F3)) player.health = player.maxHealth; // 체력 풀회복
+        if (Input.GetKeyDown(KeyCode.F4)) StartTreasure(); // 보물방
 #endif
 
     }
@@ -890,7 +1114,28 @@ public class GameManager : MonoBehaviour
         enemyBTxt.text = enemyCntB.ToString();
         enemyCTxt.text = enemyCntC.ToString();
 
-        if(boss != null)
+        if (isStatOpen)
+        {
+            statHealthText.text = "체력: " + player.health + " / " + player.maxHealth;
+
+            if (player.equipWeapon != null)
+            {
+                statWeaponDamageText.text = "무기 공격력: " + player.equipWeapon.damage;
+                statWeaponRateText.text = "공격 속도: " + player.equipWeapon.rate + "초";
+            }
+            else
+            {
+                statWeaponDamageText.text = "무기 공격력: -";
+                statWeaponRateText.text = "공격 속도: -";
+            }
+
+            statMeleeBonusText.text = "근접 공격력 보너스: " + player.bonusMeleeDamage;
+            statRangeBonusText.text = "원거리 공격력 보너스: " + player.bonusRangeDamage;
+            statSpeedText.text = "이동속도: " + player.speed;
+            statSpeedBonusText.text = "이동속도 보너스: " + player.bonusSpeed;
+        }
+
+        if (boss != null)
         {
             bossHealthGroup.anchoredPosition = Vector3.down * 30;
             bossHealthBar.localScale = new Vector3((float)boss.curHealth / boss.maxHealth, 1, 1);

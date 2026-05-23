@@ -17,8 +17,9 @@ public class MapUI : MonoBehaviour
     public Sprite bossSprite;
     public Sprite startSprite;
     public Sprite mysterySprite;
+    public Sprite treasureSprite;
     // 추후 추가 가능
-    
+
     [Header("마커")]
     public GameObject currentNodeMarker; // 현재 노드 마커 프리팹
     private GameObject markerInstance;   // 생성된 마커 오브젝트
@@ -168,6 +169,7 @@ public class MapUI : MonoBehaviour
             case MapNode.NodeType.Boss: return bossSprite;
             case MapNode.NodeType.Start: return startSprite;
             case MapNode.NodeType.Mystery: return mysterySprite;
+            case MapNode.NodeType.Treasure: return treasureSprite;
             default: return combatSprite;
         }
     }

@@ -22,8 +22,6 @@ public class WeaponSlotUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEnd
     // 드래그 시작
     public void OnBeginDrag(PointerEventData eventData)
     {
-        // 빈 슬롯이면 드래그 안 함
-        if (gameManager.player.weaponSlots[slotIndex] == -1) return;
 
         originalParent = transform.parent;
         originalPos = transform.localPosition;
@@ -36,14 +34,12 @@ public class WeaponSlotUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEnd
     // 드래그 중
     public void OnDrag(PointerEventData eventData)
     {
-        if (gameManager.player.weaponSlots[slotIndex] == -1) return;
         transform.position = eventData.position;
     }
 
     // 드래그 끝
     public void OnEndDrag(PointerEventData eventData)
     {
-        if (gameManager.player.weaponSlots[slotIndex] == -1) return;
 
         // 원래 자리로 복귀
         transform.SetParent(originalParent);

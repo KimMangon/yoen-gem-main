@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 715c700fe581421479509389a6671349, type: 3}
+  m_Name: 1BonusDamageEveryN
+  m_EditorClassIdentifier: 
+  relicName: "63\uCE35 \uAC74\uBB3C \uD53C\uADDC\uC5B4"
+  relicId: 1
+  relicDesc: "6\uBC88\uC9F8 \uACF5\uACA9\uB9C8\uB2E4 3\uB370\uBBF8\uC9C0\uAC00 \uC99D\uAC00\uD55C\uB2E4"
+  relicIcon: {fileID: 1913248328, guid: 411d0c308cb3e074d99bdb7142fd1c32, type: 3}
+  effectType: 1
+  values:
+  - 3
+  - 6
