@@ -40,8 +40,8 @@ public class RelicManager : MonoBehaviour
                 break;
 
             case RelicData.RelicEffectType.DoubleEdgedSword:
-                player.damageMultiplier = 2f;
-                player.receiveDamageMultiplier = 2f;
+                player.damageMultiplier = 1.5f;
+                player.receiveDamageMultiplier = 1.5f;
                 break;
 
             case RelicData.RelicEffectType.HealToAttack:

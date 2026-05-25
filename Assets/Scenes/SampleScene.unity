@@ -79805,7 +79805,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: 2,500
+  m_Text: 2,000
 --- !u!222 &1895750717
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -92766,6 +92766,10 @@ PrefabInstance:
       propertyPath: talkText
       value: 
       objectReference: {fileID: 712371209}
+    - target: {fileID: 6008965551208586716, guid: ea11c6cb35c36a540a85a4e5c2d06943, type: 3}
+      propertyPath: 'itemPrice.Array.data[2]'
+      value: 2000
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

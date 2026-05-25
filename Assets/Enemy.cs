@@ -206,10 +206,20 @@ public class Enemy : MonoBehaviour
 
                 if (bullet.isShotgun)
                 {
-                    curHealth -= (int)(damage * GameManager.Instance.player.damageMultiplier);
+                    if (RelicManager.Instance.isBonusDamageActive)
+                    {
+                        foreach (var relic in RelicManager.Instance.ownedRelics)
+                        {
+                            if (relic.effectType == RelicData.RelicEffectType.BonusDamageEveryN)
+                                damage += (int)(relic.values[0] * GameManager.Instance.player.damageMultiplier);
+                        }
+                        RelicManager.Instance.isBonusDamageActive = false;
+                    }
+                    curHealth -= damage;
                     GameManager.Instance.ShowDamageText(damage, transform.position);
                     StartCoroutine(OnDamage(Vector3.zero, false));
                     return;
+
                 }
             }
 
@@ -218,7 +228,7 @@ public class Enemy : MonoBehaviour
                 foreach (var relic in RelicManager.Instance.ownedRelics)
                 {
                     if (relic.effectType == RelicData.RelicEffectType.BonusDamageEveryN)
-                        damage += (int)relic.values[0];
+                        damage += (int)(relic.values[0] * GameManager.Instance.player.damageMultiplier);
                 }
                 RelicManager.Instance.isBonusDamageActive = false;
             }
@@ -229,32 +239,34 @@ public class Enemy : MonoBehaviour
             StartCoroutine(OnDamage(Vector3.zero, false));
         }
 
-      
+
         else if (other.tag == "RollMelee")
         {
             Weapon weapon = other.GetComponent<Weapon>();
             if (weapon != null)
             {
                 int damage = (int)(weapon.damage * GameManager.Instance.player.damageMultiplier);
+
+                // [추가] 63층 건물 피규어
                 if (RelicManager.Instance.isBonusDamageActive)
                 {
                     foreach (var relic in RelicManager.Instance.ownedRelics)
                     {
                         if (relic.effectType == RelicData.RelicEffectType.BonusDamageEveryN)
-                            damage += (int)relic.values[0];
+                            damage += (int)(relic.values[0] * GameManager.Instance.player.damageMultiplier);
                     }
                     RelicManager.Instance.isBonusDamageActive = false;
                 }
 
-                curHealth -= weapon.damage; 
-
+                curHealth -= damage;
                 isHit = true;
-                GameManager.Instance.ShowDamageText(weapon.damage, transform.position);
+                GameManager.Instance.ShowDamageText(damage, transform.position);
                 StartCoroutine(OnDamage(Vector3.zero, false));
                 weapon.StartCoroutine("HitCooldown");
             }
         }
-       
+
+
     }
 
 
@@ -354,11 +366,23 @@ public class Enemy : MonoBehaviour
 
     public void HitByGrenade(Vector3 explosionPos)
     {
-        curHealth -= 100;
+        int damage = (int)(100 * GameManager.Instance.player.damageMultiplier);
+
+        // [추가] 63층 건물 피규어
+        if (RelicManager.Instance.isBonusDamageActive)
+        {
+            foreach (var relic in RelicManager.Instance.ownedRelics)
+            {
+                if (relic.effectType == RelicData.RelicEffectType.BonusDamageEveryN)
+                    damage += (int)(relic.values[0] * GameManager.Instance.player.damageMultiplier);
+            }
+            RelicManager.Instance.isBonusDamageActive = false;
+        }
+
+        curHealth -= damage;
+        GameManager.Instance.ShowDamageText(damage, transform.position);
         Vector3 reactVec = transform.position - explosionPos;
-
         StartCoroutine(OnDamage(reactVec, true));
-
     }
 
 
