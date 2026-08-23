@@ -211,6 +211,12 @@ public class Player : MonoBehaviour
         {
             equipWeapon.Use();
             RelicManager.Instance.OnAttack();
+
+            if (equipWeapon.type == Weapon.Type.Melee || equipWeapon.type == Weapon.Type.Katana)
+                AudioManager.Instance.Play(AudioManager.SFX.Swing);
+            else if (equipWeapon.type == Weapon.Type.Range || equipWeapon.type == Weapon.Type.Shotgun)
+                AudioManager.Instance.Play(AudioManager.SFX.Shoot);
+
             if (equipWeapon.type == Weapon.Type.Melee)
             {
                 anim.SetTrigger("doSwing");
@@ -531,6 +537,7 @@ public class Player : MonoBehaviour
         if (other.tag == "Item")
         {
             Item item = other.GetComponent<Item>();
+            AudioManager.Instance.Play(AudioManager.SFX.Item);
             switch (item.type)
             {
                 case Item.Type.Ammo:
@@ -585,7 +592,9 @@ public class Player : MonoBehaviour
     {
         isDamage = true;
 
-        foreach(MeshRenderer mesh in meshs)
+        AudioManager.Instance.Play(AudioManager.SFX.Hit);
+
+        foreach (MeshRenderer mesh in meshs)
         {
             mesh.material.color = Color.red;
         }
@@ -621,6 +630,8 @@ public class Player : MonoBehaviour
     {
         if (RelicManager.Instance.CheckRevive())
             return;
+
+        AudioManager.Instance.Play(AudioManager.SFX.Defeat);
 
         anim.SetTrigger("doDie");
         isDead = true;

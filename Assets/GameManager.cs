@@ -171,6 +171,11 @@ public class GameManager : MonoBehaviour
 
     private Coroutine hideTooltipCoroutine;
 
+    [Header("Volume Sliders")]
+    public Slider masterVolumeSlider;
+    public Slider bgmVolumeSlider;
+    public Slider sfxVolumeSlider;
+
 
 
     void Awake()
@@ -179,9 +184,9 @@ public class GameManager : MonoBehaviour
         maxScoreTxt.text = string.Format("{0:n0}", PlayerPrefs.GetInt("MaxScore"));
         Instance = this;
 
-        if (!PlayerPrefs.HasKey("MaxScore"))  // ! 추가
+        if (!PlayerPrefs.HasKey("MaxScore"))
         {
-            PlayerPrefs.SetInt("MaxScore", 0);  // 없을 때만 0으로 초기화
+            PlayerPrefs.SetInt("MaxScore", 0);
         }
 
         if (PlayerPrefs.HasKey("ResolutionIndex"))
@@ -201,9 +206,23 @@ public class GameManager : MonoBehaviour
             child.gameObject.SetActive(false);
         }
     }
-
+    void Start()
+    {
+        
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.PlayBGM(AudioManager.BGM.Menu);
+    }
     public void GameStart()
     {
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.PlayBGM(AudioManager.BGM.InGame);
+
+        if (currentDifficulty != null)
+        {
+            player.maxHealth = (int)(player.maxHealth * currentDifficulty.playerMaxHealthMult);
+            player.health = player.maxHealth;
+        }
+
         menuCam.SetActive(false);
         gameCam.SetActive(true);
         menuPanel.SetActive(false);
@@ -258,11 +277,20 @@ public class GameManager : MonoBehaviour
 
         if (player.isDead) yield break;
 
+        AudioManager.Instance.Play(AudioManager.SFX.Clear);
+
         gamePanel.SetActive(false);
         endingPanel.SetActive(true);
         Time.timeScale = 0f;
 
         endingScoreText.text = scoreTxt.text;
+
+        // 클리어 시간 표시
+        int hour = (int)(playTime / 3600);
+        int min = (int)((playTime - hour * 3600) / 60);
+        int second = (int)(playTime % 60);
+        endingScoreText.text += " 클리어 시간: " + string.Format("{0:00}", hour) + ":" + string.Format("{0:00}", min) + ":" + string.Format("{0:00}", second);
+
         endingDifficultyText.text = currentDifficulty.difficultyName;
         if (currentDifficulty == difficulties[0]) // 이지
             endingDifficultyText.color = new Color32(255, 68, 68, 255); // #FF4444
@@ -502,7 +530,12 @@ public class GameManager : MonoBehaviour
         {
             for (int index = 0; index < stage + currentDifficulty.extraEnemyPerStage; index++)
             {
-                int ran = Random.Range(0, 3);
+                int ran;
+                if (Random.Range(0f, 1f) < currentDifficulty.enemyBSpawnRateBonus) // B 강제 스폰 확률
+                    ran = 1;
+                else
+                    ran = Random.Range(0, 3);
+
                 enemyList.Add(ran);
 
                 switch (ran)
@@ -518,7 +551,6 @@ public class GameManager : MonoBehaviour
                         break;
                 }
             }
-
             while (enemyList.Count > 0)
             {
                 int ranZone = Random.Range(0, 4);
@@ -731,11 +763,6 @@ public class GameManager : MonoBehaviour
 
     public void OpenDifficultyPanel()
     {
-        hardLevel = 0;
-        hardLevelText.text = "하드 " + hardLevel + "단계";
-        selectedDifficultyText.text = "현재 난이도 <color=#FF4444>이지</color>";
-        difficultyDescText.text = "<color=#FF4444>이지</color>\n적 체력 -50% 적 공격력 -50% 골드 획득량 +50%";
-
         titleImage.SetActive(false);
         maxScoreImage.SetActive(false);
         maxScoreText.SetActive(false);
@@ -743,6 +770,23 @@ public class GameManager : MonoBehaviour
         diffTooltipButton.SetActive(false);
 
         difficultyPanel.SetActive(true);
+
+        // [변경] 이전에 선택했던 난이도 불러오기
+        bool lastIsEasy = PlayerPrefs.GetInt("LastIsEasy", 1) == 1; // 기본값 이지
+
+        if (lastIsEasy)
+        {
+            SelectEasy();
+        }
+        else
+        {
+            hardLevel = PlayerPrefs.GetInt("LastHardLevel", 0);
+            hardLevelText.text = "하드 " + hardLevel + "단계";
+            selectedDifficultyText.text = "현재 난이도 <color=#8B0000>하드 " + hardLevel + "단계</color>";
+            currentDifficulty = difficulties[hardLevel + 1];
+            diffTooltipButton.SetActive(true);
+            UpdateHardDesc();
+        }
     }
 
     public void SelectEasy()
@@ -762,14 +806,27 @@ public class GameManager : MonoBehaviour
 
     public void ConfirmDifficulty() // 체크 버튼에 연결
     {
-        if (currentDifficulty == null) currentDifficulty = difficulties[0]; // 기본값 이지
+        if (currentDifficulty == null) currentDifficulty = difficulties[0];
+
+        // 마지막 선택 난이도 저장
+        if (currentDifficulty == difficulties[0])
+        {
+            PlayerPrefs.SetInt("LastIsEasy", 1);
+        }
+        else
+        {
+            PlayerPrefs.SetInt("LastIsEasy", 0);
+            PlayerPrefs.SetInt("LastHardLevel", hardLevel);
+        }
+        PlayerPrefs.Save();
+
         difficultyPanel.SetActive(false);
         GameStart();
     }
 
     public void ChangeHardLevel(int dir) // -1 또는 +1
     {
-        hardLevel = Mathf.Clamp(hardLevel + dir, 0, 4);
+        hardLevel = Mathf.Clamp(hardLevel + dir, 0, 6);
         hardLevelText.text = "하드 " + hardLevel + "단계";
         selectedDifficultyText.text = "현재 난이도 <color=#8B0000>하드 " + hardLevel + "단계</color>";
         currentDifficulty = difficulties[hardLevel + 1];
@@ -796,6 +853,12 @@ public class GameManager : MonoBehaviour
             case 4:
                 difficultyDescText.text = "<color=#8B0000>하드 4단계</color>\n추가되는 고난 라운드당 생성되는 적 +1";
                 break;
+            case 5:
+                difficultyDescText.text = "<color=#8B0000>하드 5단계</color>\n추가되는 고난 최대 체력 -20%";
+                break;
+            case 6:
+                difficultyDescText.text = "<color=#8B0000>하드 6단계</color>\n추가되는 고난 B타입 적 출현 확률 증가";
+                break;
         }
     }
 
@@ -803,6 +866,16 @@ public class GameManager : MonoBehaviour
     {
         diffTooltipText.text = "고난: 해당 단계에서 추가되는 패널티입니다.\n높은 단계의 고난은 이전 단계의 모든 고난을 포함합니다.";
         diffTooltipText.gameObject.SetActive(true);
+    }
+
+    public void CloseDifficultyPanel()
+    {
+        titleImage.SetActive(true);
+        maxScoreImage.SetActive(true);
+        maxScoreText.SetActive(true);
+        startButton.SetActive(true);
+
+        difficultyPanel.SetActive(false);
     }
 
     public void HideTooltip()
@@ -814,11 +887,17 @@ public class GameManager : MonoBehaviour
     {
         firstSetGroup.SetActive(false);
         resolutionPanel.SetActive(true);
-        // 현재 해상도 표시
         resolutionText.text = resolutionWidths[currentResolutionIndex] + " x " + resolutionHeights[currentResolutionIndex];
         fullscreenToggle.isOn = Screen.fullScreen;
-    }
 
+        //null이면 오류 안뜨게 건너뛰기
+        if (AudioManager.Instance != null)
+        {
+            if (masterVolumeSlider != null) masterVolumeSlider.value = AudioManager.Instance.masterVolume;
+            if (bgmVolumeSlider != null) bgmVolumeSlider.value = AudioManager.Instance.bgmVolume;
+            if (sfxVolumeSlider != null) sfxVolumeSlider.value = AudioManager.Instance.sfxVolume;
+        }
+    }
     public void CloseResolutionPanel()
     {
         resolutionPanel.SetActive(false);
@@ -889,6 +968,8 @@ public class GameManager : MonoBehaviour
 
     public void OpenChest()
     {
+        AudioManager.Instance.Play(AudioManager.SFX.Chest);
+
         closeChest.SetActive(false);
         openChest.SetActive(true);
         StartCoroutine(CoinEffect());
@@ -1022,6 +1103,22 @@ public class GameManager : MonoBehaviour
         tooltipRelicIcon.sprite = relic.relicIcon;
         tooltipPanel.SetActive(true);
     }
+
+    public void OnMasterVolumeChanged(float value)
+    {
+        AudioManager.Instance.SetMasterVolume(value);
+    }
+
+    public void OnBGMVolumeChanged(float value)
+    {
+        AudioManager.Instance.SetBGMVolume(value);
+    }
+
+    public void OnSFXVolumeChanged(float value)
+    {
+        AudioManager.Instance.SetSFXVolume(value);
+    }
+
 
 
     void Update()

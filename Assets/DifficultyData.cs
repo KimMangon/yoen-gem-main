@@ -8,4 +8,6 @@ public class DifficultyData : ScriptableObject
     public float enemyDamageMult = 1f;   // 적 데미지 배율
     public int extraEnemyPerStage = 0;   // 스테이지당 추가 적 수
     public float coinMult = 1f;          // 돈 획득 배율
+    public float playerMaxHealthMult = 1f; // 최대체력 감소
+    public float enemyBSpawnRateBonus = 0f; // B형 적 소환 비율 증가
 }

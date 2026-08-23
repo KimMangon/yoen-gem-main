@@ -94,6 +94,7 @@ public class Augment : MonoBehaviour
 
     public void OnClick()
     {
+        AudioManager.Instance.Play(AudioManager.SFX.Augment);
         maxLevel = data.counts.Length - 1;
         if (level > maxLevel) level = maxLevel;
 
