@@ -47724,9 +47724,9 @@ MonoBehaviour:
   tooltipRelicName: {fileID: 762633563}
   tooltipRelicDesc: {fileID: 349265668}
   tooltipRelicIcon: {fileID: 1813048188}
-  masterVolumeSlider: {fileID: 0}
-  bgmVolumeSlider: {fileID: 0}
-  sfxVolumeSlider: {fileID: 0}
+  masterVolumeSlider: {fileID: 631600586}
+  bgmVolumeSlider: {fileID: 1038309260}
+  sfxVolumeSlider: {fileID: 1634182680}
 --- !u!4 &1246204662
 Transform:
   m_ObjectHideFlags: 0
@@ -73048,7 +73048,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 1246204661}
         m_TargetAssemblyTypeName: GameManager, Assembly-CSharp
-        m_MethodName: OnMasterVolumeChanged
+        m_MethodName: OnSFXVolumeChanged
         m_Mode: 0
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

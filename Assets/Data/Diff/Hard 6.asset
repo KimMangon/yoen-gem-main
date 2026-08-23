@@ -18,4 +18,4 @@ MonoBehaviour:
   extraEnemyPerStage: 1
   coinMult: 0.7
   playerMaxHealthMult: 0.8
-  enemyBSpawnRateBonus: 0.3
+  enemyBSpawnRateBonus: 0.2
