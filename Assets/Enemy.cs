@@ -6,7 +6,7 @@ using UnityEngine.AI;
 
 public class Enemy : MonoBehaviour
 {
-    public enum Type {A, B, C, D };
+    public enum Type { A, B, C, D };
     public Type enemyType;
 
     public int maxHealth;
@@ -29,7 +29,7 @@ public class Enemy : MonoBehaviour
     public Animator anim;
 
     private Dictionary<int, float> lastHitTimes = new Dictionary<int, float>();
-    public float hitCooldown = 1.0f; // 다시 맞을 수 있게 되는 시간 (1초)
+    public float hitCooldown = 1.0f;
 
     void Awake()
     {
@@ -39,7 +39,7 @@ public class Enemy : MonoBehaviour
         nav = GetComponent<NavMeshAgent>();
         anim = GetComponentInChildren<Animator>();
 
-        if(enemyType != Type.D)
+        if (enemyType != Type.D)
             Invoke("ChaseStart", 2);
 
         DifficultyData diff = GameManager.Instance.currentDifficulty;
@@ -61,8 +61,6 @@ public class Enemy : MonoBehaviour
         }
     }
 
-
-
     void ChaseStart()
     {
         isChase = true;
@@ -76,13 +74,11 @@ public class Enemy : MonoBehaviour
             nav.SetDestination(target.position);
             nav.isStopped = !isChase;
         }
-            
     }
-
 
     void Targerting()
     {
-        if(!isDead && enemyType != Type.D)
+        if (!isDead && enemyType != Type.D)
         {
             float targetRadius = 0;
             float targetRange = 0;
@@ -101,9 +97,6 @@ public class Enemy : MonoBehaviour
                     targetRadius = 0.5f;
                     targetRange = 30f;
                     break;
-
-
-
             }
 
             RaycastHit[] rayHits = Physics.SphereCastAll(transform.position, targetRadius, transform.forward, targetRange, LayerMask.GetMask("Player"));
@@ -113,9 +106,7 @@ public class Enemy : MonoBehaviour
                 StartCoroutine(Attack());
             }
         }
-
     }
-
 
     IEnumerator Attack()
     {
@@ -136,7 +127,7 @@ public class Enemy : MonoBehaviour
                 break;
             case Type.B:
                 yield return new WaitForSeconds(0.3f);
-                rigid.AddForce(transform.forward*80, ForceMode.Impulse);
+                rigid.AddForce(transform.forward * 80, ForceMode.Impulse);
                 meleeArea.enabled = true;
 
                 yield return new WaitForSeconds(0.5f);
@@ -148,34 +139,27 @@ public class Enemy : MonoBehaviour
                 break;
             case Type.C:
                 yield return new WaitForSeconds(0.5f);
-                GameObject instantBullet = Instantiate(bullet, transform.position , transform.rotation);
+                GameObject instantBullet = Instantiate(bullet, transform.position, transform.rotation);
                 Rigidbody rigidBullet = instantBullet.GetComponent<Rigidbody>();
                 rigidBullet.linearVelocity = transform.forward * 20;
-                
-                //난이도 적용
+
                 Bullet bulletScript = instantBullet.GetComponent<Bullet>();
                 if (bulletScript != null && GameManager.Instance.currentDifficulty != null)
                     bulletScript.damage = (int)(bulletScript.damage * GameManager.Instance.currentDifficulty.enemyDamageMult);
 
                 yield return new WaitForSeconds(2f);
                 break;
-
         }
- 
 
         isChase = true;
         isAttack = false;
         anim.SetBool("isAttack", false);
-
     }
-
-
 
     void FixedUpdate()
     {
         FreezeVelocity();
         Targerting();
-        
     }
 
     void FreezeVelocity()
@@ -189,12 +173,11 @@ public class Enemy : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        
         if (isDead) return;
 
         if (other.tag == "Melee" || other.tag == "Bullet")
         {
-            if (isHit) return; 
+            if (isHit) return;
 
             int damage = 0;
             if (other.tag == "Melee") damage = (int)(other.GetComponent<Weapon>().damage * GameManager.Instance.player.damageMultiplier);
@@ -219,7 +202,6 @@ public class Enemy : MonoBehaviour
                     GameManager.Instance.ShowDamageText(damage, transform.position);
                     StartCoroutine(OnDamage(Vector3.zero, false));
                     return;
-
                 }
             }
 
@@ -239,7 +221,6 @@ public class Enemy : MonoBehaviour
             StartCoroutine(OnDamage(Vector3.zero, false));
         }
 
-
         else if (other.tag == "RollMelee")
         {
             Weapon weapon = other.GetComponent<Weapon>();
@@ -247,7 +228,6 @@ public class Enemy : MonoBehaviour
             {
                 int damage = (int)(weapon.damage * GameManager.Instance.player.damageMultiplier);
 
-                // [추가] 63층 건물 피규어
                 if (RelicManager.Instance.isBonusDamageActive)
                 {
                     foreach (var relic in RelicManager.Instance.ownedRelics)
@@ -265,19 +245,12 @@ public class Enemy : MonoBehaviour
                 weapon.StartCoroutine("HitCooldown");
             }
         }
-
-
     }
-
 
     public IEnumerator OnDamage(Vector3 reactVec, bool isGrenade)
     {
-        
-
-        foreach(MeshRenderer mesh in meshs)
+        foreach (MeshRenderer mesh in meshs)
             mesh.material.color = Color.red;
-
-        
 
         if (curHealth > 0)
         {
@@ -285,15 +258,14 @@ public class Enemy : MonoBehaviour
             isHit = false;
             foreach (MeshRenderer mesh in meshs)
                 mesh.material.color = Color.white;
-            
         }
-        else 
+        else
         {
             foreach (MeshRenderer mesh in meshs)
                 mesh.material.color = Color.gray;
 
             gameObject.layer = 12;
-            isHit=false;
+            isHit = false;
             isDead = true;
             isChase = false;
             nav.enabled = false;
@@ -320,8 +292,6 @@ public class Enemy : MonoBehaviour
                     coinItem.value = Mathf.Max(1, (int)(coinItem.value * diff.coinMult));
             }
 
-
-
             switch (enemyType)
             {
                 case Type.A:
@@ -338,7 +308,7 @@ public class Enemy : MonoBehaviour
                     break;
             }
 
-            if (isGrenade) 
+            if (isGrenade)
             {
                 reactVec = reactVec.normalized;
                 reactVec += Vector3.up * 3;
@@ -346,7 +316,6 @@ public class Enemy : MonoBehaviour
                 rigid.freezeRotation = false;
                 rigid.AddForce(reactVec * 5, ForceMode.Impulse);
                 rigid.AddTorque(reactVec * 4, ForceMode.Impulse);
-
             }
             else
             {
@@ -355,20 +324,15 @@ public class Enemy : MonoBehaviour
 
                 rigid.AddForce(reactVec * 5, ForceMode.Impulse);
             }
-                
-            
-                 Destroy(gameObject, 4);
+
+            Destroy(gameObject, 4);
         }
-
-
-
     }
 
     public void HitByGrenade(Vector3 explosionPos)
     {
         int damage = (int)(100 * GameManager.Instance.player.damageMultiplier);
 
-        // [추가] 63층 건물 피규어
         if (RelicManager.Instance.isBonusDamageActive)
         {
             foreach (var relic in RelicManager.Instance.ownedRelics)
@@ -384,25 +348,6 @@ public class Enemy : MonoBehaviour
         Vector3 reactVec = transform.position - explosionPos;
         StartCoroutine(OnDamage(reactVec, true));
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

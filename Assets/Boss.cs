@@ -1,19 +1,19 @@
-using System.Collections;
+Ôªøusing System.Collections;
 using UnityEngine;
 using UnityEngine.AI;
 
 public class Boss : Enemy
 {
-
     public GameObject Missile;
     public Transform missilePortA;
     public Transform missilePortB;
     public bool isLook;
+    public GameObject bossRockPrefab; // Î∞úÏÇ¨Ìï† Ï¥ùÏïå ÌîÑÎ¶¨Ìåπ
 
     Vector3 lookVec;
     Vector3 tauntVec;
-    
 
+    bool hasUsedPhase2 = false;
 
     void Awake()
     {
@@ -24,6 +24,9 @@ public class Boss : Enemy
         anim = GetComponentInChildren<Animator>();
 
         nav.isStopped = true;
+
+        foreach (Orbit orbit in GetComponentsInChildren<Orbit>())
+            orbit.Target = transform;
 
         StartCoroutine(Think());
     }
@@ -36,20 +39,23 @@ public class Boss : Enemy
             return;
         }
 
-        if (isLook) 
+        if (!hasUsedPhase2 && curHealth <= maxHealth * 0.5f)
+        {
+            hasUsedPhase2 = true;
+            StartCoroutine(Phase2Pattern());
+        }
+
+        if (isLook)
         {
             float h = Input.GetAxisRaw("Horizontal");
             float v = Input.GetAxisRaw("Vertical");
 
-            lookVec = new Vector3(h, 0, v) * 5f; 
+            lookVec = new Vector3(h, 0, v) * 5f;
             transform.LookAt(target.position + lookVec);
         }
-        else 
+        else
             nav.SetDestination(tauntVec);
     }
-
-
-
 
     IEnumerator Think()
     {
@@ -57,28 +63,21 @@ public class Boss : Enemy
 
         int ranAction = Random.Range(0, 5);
 
-        switch (ranAction) 
+        switch (ranAction)
         {
             case 0:
             case 1:
-                //πÃªÁ¿œ
                 StartCoroutine(MissileShot());
                 break;
             case 2:
             case 3:
-                //µπ
                 StartCoroutine(RockShot());
                 break;
             case 4:
-                //¬¿«¡ ∞¯∞›
                 StartCoroutine(Taunt());
                 break;
-
         }
-
     }
-
-
 
     IEnumerator MissileShot()
     {
@@ -98,7 +97,6 @@ public class Boss : Enemy
         StartCoroutine(Think());
     }
 
-
     IEnumerator RockShot()
     {
         isLook = false;
@@ -110,7 +108,6 @@ public class Boss : Enemy
         isLook = true;
         StartCoroutine(Think());
     }
-
 
     IEnumerator Taunt()
     {
@@ -133,19 +130,28 @@ public class Boss : Enemy
         StartCoroutine(Think());
     }
 
+    IEnumerator Phase2Pattern()
+    {
+        anim.SetTrigger("doBigShot");
+        yield return new WaitForSeconds(2f);
 
+        Orbit[] orbiters = GetComponentsInChildren<Orbit>();
 
+        int shotCount = 0;
+        while (shotCount < 14)
+        {
+            foreach (Orbit orbiter in orbiters)
+            {
+                Vector3 dir = (orbiter.transform.position - transform.position).normalized;
+                GameObject rock = Instantiate(bossRockPrefab, orbiter.transform.position, Quaternion.LookRotation(dir));
 
+                Rigidbody rockRigid = rock.GetComponent<Rigidbody>();
+                if (rockRigid != null)
+                    rockRigid.linearVelocity = dir * 20f;
+            }
 
-
-
-
-
-
-
-
-
-
-
-
+            shotCount++;
+            yield return new WaitForSeconds(0.5f);
+        }
+    }
 }

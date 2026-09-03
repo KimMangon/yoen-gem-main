@@ -20,11 +20,11 @@ MonoBehaviour:
   baseDamage: 0
   basecount: 0
   damages:
-  - 3
   - 4
   - 5
+  - 6
   - 7
-  - 9
+  - 10
   counts: 14000000190000001e0000002300000028000000
   durations: []
   weaponPrefab: []

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Augment 4
   m_EditorClassIdentifier: 
   augmentType: 2
-  augmentName: "\uCCB4\uB825 \uD68C\uBCF5"
+  augmentName: "\uCD5C\uB300\uCCB4\uB825 \uC99D\uAC00"
   augmentId: 4
   augmentDesc: 
   augmentIcon: {fileID: 21300000, guid: 3cadcd247345c2649b0e8fbd9ee6e8db, type: 3}
@@ -21,10 +21,10 @@ MonoBehaviour:
   basecount: 0
   damages:
   - 20
-  - 20
-  - 30
   - 30
   - 40
+  - 50
+  - 60
   counts: 0000000000000000000000000000000000000000
   durations: []
   weaponPrefab: []

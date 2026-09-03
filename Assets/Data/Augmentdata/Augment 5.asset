@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Augment 5
   m_EditorClassIdentifier: 
   augmentType: 2
-  augmentName: "\uCCB4\uB825 \uAC10\uC18C"
+  augmentName: "\uCD5C\uB300\uCCB4\uB825 \uAC10\uC18C"
   augmentId: 5
   augmentDesc: 
   augmentIcon: {fileID: 21300000, guid: 3cadcd247345c2649b0e8fbd9ee6e8db, type: 3}
@@ -24,7 +24,7 @@ MonoBehaviour:
   - 30
   - 30
   - 20
-  - 20
+  - 10
   counts: 0000000000000000000000000000000000000000
   durations: []
   weaponPrefab: []

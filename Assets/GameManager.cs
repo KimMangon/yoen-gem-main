@@ -1168,6 +1168,11 @@ public class GameManager : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.F2)) ShowEnding();  // 엔딩 즉시 표시
         if (Input.GetKeyDown(KeyCode.F3)) player.health = player.maxHealth; // 체력 풀회복
         if (Input.GetKeyDown(KeyCode.F4)) StartTreasure(); // 보물방
+        if (Input.GetKeyDown(KeyCode.F5))
+        {
+            isBattle = true;
+            StartCoroutine(InBattle(true));
+        }
 #endif
 
     }

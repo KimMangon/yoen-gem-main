@@ -23,6 +23,10 @@ public class Augment : MonoBehaviour
     int rangeBuffAmount = 0;
     // 원거리 약화(3번) 수치 저장
     int rangeDebuffAmount = 0;
+    // 최대체력 증가(4번) 수치 저장
+    int maxHealthBuffAmount = 0;
+    // 최대체력 감소(5번) 수치 저장
+    int maxHealthDebuffAmount = 0; 
     // 이동속도 강화(6번) 수치 저장
     float speedBuffAmount = 0;
     // 이동속도 약화(7번) 수치 저장
@@ -67,9 +71,9 @@ public class Augment : MonoBehaviour
             case AugmentData.AugmentType.Health:
                 int hVal = (int)data.damages[nextLevel];
                 if (data.augmentId == 4)
-                    augmentLevel.text = "Lv." + level + "\n<color=#6AB4FF>" + hVal + " 회복</color>";
+                    augmentLevel.text = "Lv." + level + "\n<color=#6AB4FF>" + hVal + " 최대체력 증가</color>";
                 else
-                    augmentLevel.text = "Lv." + level + "\n<color=#FF6464>" + hVal + " 감소</color>";
+                    augmentLevel.text = "Lv." + level + "\n<color=#FF6464>" + hVal + " 최대체력 감소</color>";
                 break;
 
             case AugmentData.AugmentType.Shoe:
@@ -121,10 +125,23 @@ public class Augment : MonoBehaviour
                 case AugmentData.AugmentType.Health:
                     int healthVal = (int)data.damages[level];
                     if (data.augmentId == 4)
-                        player.Heal(healthVal);
+                    {
+                        player.maxHealth -= maxHealthBuffAmount; // 이전 값 제거
+                        maxHealthBuffAmount = healthVal;
+                        player.maxHealth += maxHealthBuffAmount; // 새 값 적용
+                        player.health += healthVal; // 회복분은 그대로 즉시 지급 (레벨업 시 체력도 같이 차오르게)
+                    }
                     else if (data.augmentId == 5)
                     {
-                        player.health -= healthVal;
+                        player.maxHealth += maxHealthDebuffAmount; // 이전 값 되돌림
+                        maxHealthDebuffAmount = healthVal;
+                        player.maxHealth -= maxHealthDebuffAmount; // 새 값 적용
+                        if (player.maxHealth < 1)
+                            player.maxHealth = 1;
+
+                        if (player.health > player.maxHealth)
+                            player.health = player.maxHealth;
+
                         if (player.health <= 0)
                             player.OnDie();
                     }
